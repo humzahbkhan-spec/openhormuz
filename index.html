@@ -954,8 +954,8 @@ const CONFIG = {
   escortDamageReduction: 0.4,       // at full escort, attack damage reduced by 40%
 
   // Confidence model (multiplicative — S-curve on product of factors)
-  confSteepness: 0.10,
-  confMidpoint: 28,
+  confSteepness: 0.08,
+  confMidpoint: 50,
 
   // Traffic model (asymmetric)
   trafficCollapseThreshold: 35,
@@ -970,23 +970,11 @@ const CONFIG = {
 
   // Premium burden
   premiumBaseline: 20,
-  premiumDecayRate: 0.06,
+  premiumDecayRate: 0.03,
 
   // Operational willingness
   willingnessRecoveryRate: 0.06,
   willingnessAttackPenalty: 20,
-
-  // Safe passage accumulation — repeated safe days build momentum
-  safePassageGrowthRate: 0.08,      // how fast safe passage accumulates per qualifying day
-  safePassageDecayOnAttack: 0.5,    // multiplier on attack (loses half)
-  safePassageConfBoost: 0.15,       // how much safe passage helps confidence recovery rate
-
-  // Convoy bootstrap — breaks the no-traffic/no-confidence deadlock
-  // When threat and mines are both low and escorts high, allow minimum escorted traffic
-  convoyBootstrapThreatMax: 25,     // threat must be below this
-  convoyBootstrapMineMax: 20,       // mines must be below this
-  convoyBootstrapEscortMin: 50,     // escort allocation must be above this
-  convoyBootstrapTraffic: 15,       // minimum traffic floor from escorted convoys
 };
 
 
@@ -1651,7 +1639,6 @@ function initState() {
     trafficFlow: cfg.initialTraffic,
     suppressionEffect: 0,
     reconstitution: cfg.iranReconBaseRate,
-    safePassage: 0,         // accumulates with repeated safe escorted transits
     attackOccurred: false,
     iranAlloc: {
       drone: cfg.iranDroneWeight,
@@ -1890,10 +1877,8 @@ function simulateDay(pa) {
   // --- Escort credibility ---
   // Escorts have immediate operational value (attack probability + damage reduction above)
   // AND build long-term credibility through repeated safe transits.
-  // Decay is conditional: only decays meaningfully when escort effort is low.
-  if (!s.attackOccurred && pa.escort > 20) {
-    const escortGrowth = pa.escort * cfg.escortBuildRate * 0.12;
-    s.escortCredibility += escortGrowth;
+  if (!s.attackOccurred && pa.escort > 30) {
+    s.escortCredibility += pa.escort * cfg.escortBuildRate * 0.1;
     if (s.escortCredibility > 40 && s.escortCredibility < 45) {
       events.push({text: "Escort presence noted, but insufficient for broad confidence", type: 'neutral'});
     }
@@ -1901,9 +1886,7 @@ function simulateDay(pa) {
       events.push({text: "Repeated safe escort transits building operator confidence", type: 'good'});
     }
   }
-  // Decay scales inversely with escort effort — neglecting escorts erodes credibility faster
-  const escortDecay = pa.escort > 40 ? 0.2 : pa.escort > 20 ? 0.4 : 0.8;
-  s.escortCredibility -= escortDecay;
+  s.escortCredibility -= 0.5;
 
   // --- Cover (Talmadge: requires BOTH low threat AND low mines) ---
   // Insurance is multiplicative: both dimensions must be safe.
@@ -1929,27 +1912,6 @@ function simulateDay(pa) {
     s.operationalWillingness += (Math.max(0, willTarget) - s.operationalWillingness) * cfg.willingnessRecoveryRate;
   }
 
-  // --- Safe passage accumulation ---
-  // Tracks demonstrated safety over time. Grows when conditions are good,
-  // collapses sharply on attack. Helps break the confidence deadlock.
-  if (!s.attackOccurred && s.threatPressure < 40 && s.mineThreat < 30 && pa.escort > 30) {
-    const safeGrowth = cfg.safePassageGrowthRate *
-      (1 - s.threatPressure / 60) * (1 - s.mineThreat / 40);
-    s.safePassage = clamp(s.safePassage + safeGrowth, 0, 1);
-  } else if (s.attackOccurred) {
-    s.safePassage *= cfg.safePassageDecayOnAttack; // lose half on attack
-  }
-  // Slow natural decay when not actively building
-  if (s.attackOccurred || pa.escort <= 30) {
-    s.safePassage *= 0.97;
-  }
-
-  // Safe passage also helps cover and willingness recover
-  if (s.safePassage > 0.3) {
-    s.coverAvailability += s.safePassage * 1.5;
-    s.operationalWillingness += s.safePassage * 2.0;
-  }
-
   // --- Clamp ---
   s.threatPressure = clamp(s.threatPressure, 0, 100);
   s.mineThreat = clamp(s.mineThreat, 0, 100);
@@ -1962,39 +1924,34 @@ function simulateDay(pa) {
   // --- Merchant Confidence (Talmadge-informed) ---
   // Confidence is NOT a weighted average. It is constrained by the WORST
   // blocking factor. Any single dealbreaker can keep confidence near zero.
+  // Think of it as a chain: the weakest link determines the whole.
   //
   // Mine psychology: even 10-15% mine threat is enough to shut shipping.
-  // Relaxed slightly at low residual levels — below 5% is manageable.
+  // The disproportionate effect of mines on confidence is the key insight.
   const mineConfFactor = s.mineThreat > 50 ? 0 :
     s.mineThreat > 25 ? 0.15 :
     s.mineThreat > 10 ? 0.5 :
-    s.mineThreat > 5 ? 0.75 :
-    s.mineThreat > 2 ? 0.9 : 1.0;
+    s.mineThreat > 3 ? 0.8 : 1.0;
 
   const threatConfFactor = clamp(1 - s.threatPressure / 100, 0, 1);
-  const coverFactor = clamp(s.coverAvailability / 50, 0, 1); // relaxed from 60
-  const premiumFactor = clamp(1 - (s.premiumBurden - 25) / 70, 0, 1); // less punitive late
-  const willingFactor = clamp(s.operationalWillingness / 40, 0, 1); // relaxed from 50
-  const escortConfFactor = 0.4 + 0.6 * (s.escortCredibility / 100); // escorts matter more
-
-  // Safe passage bonus: demonstrated safety directly lifts confidence product
-  const safePassageBonus = 1 + s.safePassage * 0.3; // up to 30% boost at full safe passage
+  const coverFactor = clamp(s.coverAvailability / 60, 0, 1); // need at least 60% cover
+  const premiumFactor = clamp(1 - (s.premiumBurden - 30) / 60, 0, 1);
+  const willingFactor = clamp(s.operationalWillingness / 50, 0, 1);
+  const escortFactor = 0.5 + 0.5 * (s.escortCredibility / 100);
 
   // Multiplicative: every factor must be reasonable for confidence to build
   const confProduct = mineConfFactor * threatConfFactor * coverFactor *
-    premiumFactor * willingFactor * escortConfFactor * safePassageBonus;
+    premiumFactor * willingFactor * escortFactor;
 
   // Apply S-curve to the product for nonlinearity
-  const rawConf = clamp(confProduct * 100, 0, 100);
+  const rawConf = confProduct * 100;
   const target = scurve(rawConf, cfg.confSteepness, cfg.confMidpoint);
 
   // Asymmetric movement: slow to build, fast to collapse
-  // Safe passage accelerates recovery — demonstrated safety builds momentum
-  const recoveryRate = 0.10 + s.safePassage * cfg.safePassageConfBoost;
   if (target > s.merchantConfidence) {
-    s.merchantConfidence += (target - s.merchantConfidence) * recoveryRate;
+    s.merchantConfidence += (target - s.merchantConfidence) * 0.10; // slow recovery
   } else {
-    s.merchantConfidence += (target - s.merchantConfidence) * 0.35; // fast collapse unchanged
+    s.merchantConfidence += (target - s.merchantConfidence) * 0.35; // fast collapse
   }
   s.merchantConfidence = clamp(s.merchantConfidence, 0, 100);
 
@@ -2005,20 +1962,6 @@ function simulateDay(pa) {
   } else {
     trafficTarget = cfg.trafficMinResidual + s.merchantConfidence * 0.95;
   }
-
-  // --- Convoy bootstrap ---
-  // When threat and mines are both low and escorts high, allow minimum
-  // escorted convoy traffic even before confidence fully recovers.
-  // Breaks the no-traffic/no-confidence/no-safety deadlock.
-  if (s.threatPressure < cfg.convoyBootstrapThreatMax &&
-      s.mineThreat < cfg.convoyBootstrapMineMax &&
-      pa.escort >= cfg.convoyBootstrapEscortMin) {
-    trafficTarget = Math.max(trafficTarget, cfg.convoyBootstrapTraffic);
-    if (s.trafficFlow < cfg.convoyBootstrapTraffic && s.trafficFlow > cfg.convoyBootstrapTraffic - 3) {
-      events.push({text: "Escorted convoys establishing minimum safe transit corridor", type: 'good'});
-    }
-  }
-
   trafficTarget = clamp(trafficTarget, cfg.trafficMinResidual, 100);
 
   if (trafficTarget > s.trafficFlow) {
@@ -2032,8 +1975,6 @@ function simulateDay(pa) {
   if (s.coverAvailability > 60 && s.coverAvailability < 65) events.push({text: "Insurers cautiously resume strait cover", type: 'good'});
   if (s.premiumBurden > 80 && s.day % 5 === 0) events.push({text: "Insurance premiums deter most operators", type: 'warn'});
   if (s.baseOperability < 50) events.push({text: "5th Fleet base damage limits sortie rate", type: 'warn'});
-  if (s.safePassage > 0.4 && s.safePassage < 0.45) events.push({text: "Consecutive safe transits building commercial momentum", type: 'good'});
-  if (s.safePassage > 0.7 && s.safePassage < 0.75) events.push({text: "Demonstrated safe passage record encouraging broader participation", type: 'good'});
 
   // --- History ---
   history.traffic.push(s.trafficFlow);
@@ -2250,15 +2191,6 @@ function updateShipperOutlook() {
   if (s.threatPressure > 10 && s.threatPressure < 25 && s.reconstitution > 2) {
     items.push({ icon: 'amber', speaker: 'Analysts',
       text: 'Remaining Iranian capabilities are dispersed, mobile, and hardened. Each additional strike yields diminishing returns.' });
-  }
-
-  // --- Safe passage momentum ---
-  if (s.safePassage > 0.5) {
-    items.push({ icon: 'green', speaker: 'Ship Operators',
-      text: 'Accumulating safe transit record is building real commercial momentum.' });
-  } else if (s.safePassage > 0.2 && s.threatPressure < 30 && s.mineThreat < 20) {
-    items.push({ icon: 'amber', speaker: 'Ship Operators',
-      text: 'Some consecutive safe transits noted, but track record still too short for broad confidence.' });
   }
 
   // --- Overall summary ---
