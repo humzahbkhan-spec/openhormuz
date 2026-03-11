@@ -725,9 +725,13 @@ body {
   <!-- LEFT: Controls -->
   <div class="panel" id="left-panel">
     <div class="panel-title">Mission Allocation</div>
+    <div class="budget-row" style="color:var(--text-dim); font-size:11px; margin-bottom:2px;">
+      <span>Total effort budget</span>
+      <span>200</span>
+    </div>
     <div class="budget-row">
-      <span>Effort remaining</span>
-      <span class="budget-val" id="budget-remaining">200</span>
+      <span>Unallocated effort</span>
+      <span class="budget-val" id="budget-remaining">0</span>
     </div>
 
     <div class="alloc-group" data-tooltip="Hit Iranian launch sites, missile batteries, and drone staging. Directly reduces threat level.">
@@ -836,7 +840,7 @@ body {
       <div style="margin-top:14px;">
         <div class="stat-line"><span>Strait traffic</span><span class="stat-val" style="color:var(--red)">Down 97%</span></div>
         <div class="stat-line"><span>Oil price</span><span class="stat-val" style="color:var(--red)">$110+/bbl, rising</span></div>
-        <div class="stat-line"><span>War-risk insurance</span><span class="stat-val" style="color:var(--red)">Prohibitively expensive</span></div>
+        <div class="stat-line"><span>Shipping insurance</span><span class="stat-val" style="color:var(--red)">Prohibitively expensive</span></div>
         <div class="stat-line"><span>Mine threat</span><span class="stat-val" style="color:var(--red)">Confirmed in or near shipping lanes</span></div>
         <div class="stat-line"><span>U.S. air superiority</span><span class="stat-val" style="color:var(--green)">Established</span></div>
       </div>
@@ -1808,7 +1812,7 @@ function simulateDay(pa) {
     const costMsgs = [
       "One $20K drone just shut down $50M in daily shipping revenue",
       "Iran doesn't need to sink ships — one hit collapses insurance cover for weeks",
-      "War-risk premiums spike 300% — charterers reroute around the Cape, adding 10 days per voyage",
+      "Insurance premiums spike 300% — charterers reroute around the Cape, adding 10 days per voyage",
       "A single attack undoes weeks of escort credibility — shippers remember the hit, not the safe days",
       "The interceptor missile cost more than the drone it shot down — and it still got through",
       "Crew unions threaten to refuse Hormuz transit — no crew, no ships, no cargo",
@@ -1914,7 +1918,7 @@ function simulateDay(pa) {
   s.trafficFlow = clamp(s.trafficFlow, cfg.trafficMinResidual, 100);
 
   if (s.coverAvailability > 60 && s.coverAvailability < 65) events.push({text: "Insurers cautiously resume strait cover", type: 'good'});
-  if (s.premiumBurden > 80 && s.day % 5 === 0) events.push({text: "War-risk premiums deter most operators", type: 'warn'});
+  if (s.premiumBurden > 80 && s.day % 5 === 0) events.push({text: "Insurance premiums deter most operators", type: 'warn'});
   if (s.baseOperability < 50) events.push({text: "5th Fleet base damage limits sortie rate", type: 'warn'});
 
   // --- History ---
@@ -2035,40 +2039,40 @@ function updateShipperOutlook() {
   // --- Mines ---
   if (s.mineThreat > 70) {
     items.push({ icon: 'red', speaker: 'Shipowners',
-      text: 'No one will risk a hull in unsurveyed lanes. Until mines are cleared, the strait is closed.' });
+      text: 'Mine threat remains severe and unmitigated. No operator will risk a hull in unsurveyed lanes.' });
   } else if (s.mineThreat > 40) {
     items.push({ icon: 'red', speaker: 'Shipowners',
-      text: 'Suspected mines still in shipping lanes. Most operators won\'t transit without full route survey.' });
+      text: 'Mine threat remains significant. Most operators will not transit without a full route survey.' });
   } else if (s.mineThreat > 15) {
     items.push({ icon: 'amber', speaker: 'Shipowners',
-      text: 'Mine threat declining, but residual risk keeps cautious operators out.' });
+      text: 'Mine threat remains low-probability but high-consequence, keeping cautious operators out.' });
   } else {
     items.push({ icon: 'green', speaker: 'Shipowners',
-      text: 'Shipping lanes assessed as largely clear. Mine risk manageable.' });
+      text: 'Shipping lanes assessed as largely clear. Residual mine risk within acceptable bounds.' });
   }
 
   // --- Insurance ---
   if (s.coverAvailability < 15) {
-    items.push({ icon: 'red', speaker: 'Lloyd\'s / Insurers',
-      text: 'War-risk cover withdrawn for strait transit. Ships cannot legally sail without it.' });
+    items.push({ icon: 'red', speaker: 'Insurers',
+      text: 'Cover is scarce, expensive, and highly restrictive; many mainstream operators cannot obtain acceptable terms.' });
   } else if (s.coverAvailability < 40) {
-    items.push({ icon: 'red', speaker: 'Lloyd\'s / Insurers',
-      text: 'Only a few specialty insurers offering cover — at prohibitive rates. Most ships can\'t get a policy.' });
+    items.push({ icon: 'red', speaker: 'Insurers',
+      text: 'Only specialty underwriters offering cover at prohibitive rates. Most operators cannot secure a policy.' });
   } else if (s.coverAvailability < 70) {
     items.push({ icon: 'amber', speaker: 'Insurers',
-      text: 'Cover becoming available from some underwriters, but terms are restrictive and premiums high.' });
+      text: 'Cover becoming available from some underwriters, but terms remain restrictive and premiums elevated.' });
   } else {
     items.push({ icon: 'green', speaker: 'Insurers',
-      text: 'War-risk cover broadly available. Premiums still elevated but not prohibitive.' });
+      text: 'Insurance broadly available. Premiums elevated but no longer prohibitive.' });
   }
 
   // --- Premiums ---
   if (s.premiumBurden > 80) {
     items.push({ icon: 'red', speaker: 'Charterers',
-      text: 'Premiums make strait transit uneconomical. Cheaper to reroute around the Cape.' });
+      text: 'Premiums and delay risk make strait transit uneconomical. Rerouting around the Cape is cheaper.' });
   } else if (s.premiumBurden > 50) {
     items.push({ icon: 'amber', speaker: 'Charterers',
-      text: 'Premiums still painful. Only high-value or time-sensitive cargoes worth the cost.' });
+      text: 'Premiums and delay risk make transit unattractive relative to waiting or rerouting.' });
   } else if (s.premiumBurden > 30) {
     items.push({ icon: 'amber', speaker: 'Charterers',
       text: 'Premiums declining. More cargoes becoming economical for strait routing.' });
@@ -2077,76 +2081,76 @@ function updateShipperOutlook() {
   // --- Crew ---
   if (s.operationalWillingness < 15) {
     items.push({ icon: 'red', speaker: 'Crew & Masters',
-      text: 'Crews refusing strait passage. Seafarer unions backing them. No one wants to be the next headline.' });
+      text: 'Crew willingness is deteriorating, and labor protections make refusals more likely.' });
   } else if (s.operationalWillingness < 40) {
     items.push({ icon: 'amber', speaker: 'Crew & Masters',
-      text: 'Some experienced crews willing if escorts provided and premiums compensate hazard pay.' });
+      text: 'Some experienced crews willing if escorts provided and hazard compensation offered.' });
   } else if (s.operationalWillingness < 70) {
     items.push({ icon: 'amber', speaker: 'Crew & Masters',
-      text: 'Willingness improving. Crews watching for incidents — one attack could reverse this.' });
+      text: 'Willingness improving, but remains fragile. A single incident could reverse progress.' });
   } else {
     items.push({ icon: 'green', speaker: 'Crew & Masters',
-      text: 'Most crews comfortable transiting with current security posture.' });
+      text: 'Most crews willing to transit under current security posture.' });
   }
 
   // --- Escort trust ---
   if (s.escortCredibility < 20) {
     items.push({ icon: 'red', speaker: 'Ship Operators',
-      text: 'Navy says they\'ll escort. Operators want proof — weeks of safe transits, not press releases.' });
+      text: 'Escort announcements help less than demonstrated safe passage. Operators want proof, not press releases.' });
   } else if (s.escortCredibility < 50) {
     items.push({ icon: 'amber', speaker: 'Ship Operators',
-      text: 'Escort track record building. Some operators testing the route. Most still waiting.' });
+      text: 'Escort track record building. Some operators testing the route; most still waiting.' });
   } else if (s.escortCredibility < 75) {
     items.push({ icon: 'amber', speaker: 'Ship Operators',
-      text: 'Growing confidence in Navy escorts. More operators booking strait transits.' });
+      text: 'Growing confidence in escort operations. More operators booking strait transits.' });
   } else {
     items.push({ icon: 'green', speaker: 'Ship Operators',
-      text: 'Escort credibility high. Operators broadly trust the Navy can protect transits.' });
+      text: 'Escort credibility high. Operators broadly trust naval protection for transits.' });
   }
 
   // --- Iranian reconstitution / drone threat (the Policy Tensor insight) ---
   if (s.reconstitution > 5 && s.threatPressure > 40) {
     items.push({ icon: 'red', speaker: 'Analysts',
-      text: 'Iran rebuilding strike capability faster than U.S. can degrade it. Drones launching from dispersed, hidden sites.' });
+      text: 'Iranian disruption capability is reconstituting faster than strikes can degrade it.' });
   } else if (s.reconstitution > 3 && s.threatPressure > 25) {
     items.push({ icon: 'amber', speaker: 'Analysts',
-      text: 'Iranian capabilities still reconstituting. Threat not declining fast enough to restore confidence.' });
+      text: 'Iranian disruption capability is falling, but not fast enough to restore confidence.' });
   }
 
   // --- MCM under fire (Talmadge) ---
   if (s.mineThreat > 30 && s.threatPressure > 40) {
     items.push({ icon: 'red', speaker: '5th Fleet MCM',
-      text: 'Can\'t safely sweep mines while under missile threat. Must suppress Iranian fire before MCM can operate effectively.' });
+      text: 'Mine countermeasures remain constrained unless missile and drone threats are suppressed.' });
   } else if (s.mineThreat > 20 && s.threatPressure > 20) {
     items.push({ icon: 'amber', speaker: '5th Fleet MCM',
-      text: 'Mine clearing proceeding at reduced pace — threat environment still constrains operations.' });
+      text: 'Mine clearing proceeding at reduced pace. Threat environment still constrains operations.' });
   }
 
   // --- Base readiness feedback loop ---
   if (s.baseOperability < 50) {
     items.push({ icon: 'red', speaker: '5th Fleet',
-      text: 'Base damage degrading sortie rate. Fewer sorties means slower threat suppression — a vicious cycle.' });
+      text: 'Base damage reducing sortie generation. Lower sortie rates slow threat suppression.' });
   }
 
   // --- "Last 15-20%" problem (Talmadge) ---
   if (s.threatPressure > 10 && s.threatPressure < 25 && s.reconstitution > 2) {
     items.push({ icon: 'amber', speaker: 'Analysts',
-      text: 'Remaining Iranian capabilities are dispersed, mobile, and hardened. Degradation slowing — each additional strike yields less.' });
+      text: 'Remaining Iranian capabilities are dispersed, mobile, and hardened. Each additional strike yields diminishing returns.' });
   }
 
   // --- Overall summary ---
   if (s.trafficFlow < 10) {
     items.push({ icon: 'red', speaker: 'Summary',
-      text: 'The strait is effectively closed. Only the most desperate traffic moves.' });
+      text: 'The strait is effectively closed to normal commercial traffic.' });
   } else if (s.trafficFlow > 60 && s.merchantConfidence > 55) {
     items.push({ icon: 'green', speaker: 'Summary',
-      text: 'Commercial traffic recovering. Confidence fragile — one incident could reverse progress.' });
+      text: 'Commercial traffic recovering. Confidence remains fragile.' });
   } else if (s.threatPressure < 15 && s.mineThreat > 20) {
     items.push({ icon: 'amber', speaker: 'Summary',
-      text: 'Iranian fire largely suppressed, but mines still blocking commerce. Military victory ≠ open strait.' });
+      text: 'Iranian fire largely suppressed, but mine threat continues to block commercial traffic.' });
   } else if (s.threatPressure < 15 && s.mineThreat < 15 && s.merchantConfidence < 40) {
     items.push({ icon: 'amber', speaker: 'Summary',
-      text: 'Threat and mines both down, but shippers still won\'t cross. Confidence lags weeks behind military success.' });
+      text: 'Threat and mines both reduced, but commercial confidence lags behind military progress.' });
   }
 
   // Render
@@ -2231,12 +2235,12 @@ function resetGame() {
   const scenarioLabel = SCENARIOS[document.getElementById('scenario-select').value].label;
   addLogEntries([
     `Scenario: ${scenarioLabel}`,
-    'IRGC Navy mines confirmed in shipping lanes',
-    'Lloyd\'s suspends war-risk cover for strait transit',
-    'Strait traffic down 97% — 20M bbl/day blocked',
-    'Oil past $110/bbl, rising',
-    'U.S. air superiority established over Gulf theater',
-    'Joint U.S.–Israeli strikes destroy Iranian air defenses',
+    'IRGC mine threat confirmed in or near shipping lanes',
+    'Shipping insurance becomes scarce and sharply repriced',
+    'Strait traffic falls sharply',
+    'Oil moves above $110/bbl and rising',
+    'U.S. airpower gains broad freedom of action',
+    'Joint strikes severely degrade Iranian air defenses',
   ]);
 }
 
