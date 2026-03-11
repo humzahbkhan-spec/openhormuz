@@ -873,16 +873,44 @@ body {
 // ============================================================
 
 const CONFIG = {
+  // ---------------------------------------------------------------
+  // REFACTORING NOTES (v2):
+  //
+  // Attack probability recalibrated:
+  //   Old: attackProb = 0.03 * threatPressure * (1 - reserve * 0.003)
+  //   This clamped to 0.85 almost every turn in Balanced. Attacks were
+  //   near-daily, making escorts and reserves feel pointless.
+  //   New: attackProb = coeff * threat/100 * traffic/100 * escortMod * reserveMod
+  //   Attacks scale with Iranian capability AND how many ships are exposed.
+  //   Escorts and reserves both reduce attack probability meaningfully.
+  //   Capped at 0.45 so attacks are dangerous, not inevitable.
+  //
+  // Escorts now matter operationally:
+  //   Old: escorts only built credibility on safe days.
+  //   New: escort allocation directly reduces attack probability (escortAttackReduction)
+  //   AND reduces confidence damage when attacks succeed (escortDamageReduction).
+  //   Credibility still builds over repeated safe transits.
+  //
+  // Dead config variables removed:
+  //   confWeightCover, confWeightPremium, confWeightWillingness,
+  //   confWeightEscort, confWeightMineThreat, confWeightThreat —
+  //   these were from an old weighted-average confidence model.
+  //   The active model uses multiplicative factors (product of components).
+  //   Also removed: coverThreatSensitivity, premiumThreatFactor,
+  //   premiumMinesFactor, willingnessMinesPenalty — not referenced in code.
+  //
+  // Scenario presets now map only to live mechanics:
+  //   All dead-variable overrides removed. Each preset changes parameters
+  //   that directly affect the active simulation model.
+  // ---------------------------------------------------------------
+
   // Win / Lose
   winTrafficThreshold: 70,
   winConsecutiveDays: 7,
   maxDays: 90,
-  // Lose: economic damage thresholds
-  // At 30 days below 30% traffic, global recession locks in ($150+/bbl oil)
-  // At 60 days below 30%, structural damage — supply chains permanently reroute
-  loseRecessionDays: 30,       // Days below threshold before recession
-  loseRecessionFloor: 30,      // Traffic % threshold
-  loseStructuralDays: 60,      // Days below threshold before structural damage
+  loseRecessionDays: 30,
+  loseRecessionFloor: 30,
+  loseStructuralDays: 60,
 
   // Initial state
   initialTraffic: 5,
@@ -912,18 +940,23 @@ const CONFIG = {
   strikeEffectiveness: 0.275,
   mcmEffectiveness: 0.15,
   escortBuildRate: 0.075,
-  escortDecayOnAttack: 25,
+  escortDecayOnAttack: 20,
   baseDefenseEffect: 0.2,
-  reserveInterceptChance: 0.003,
   baseOperabilityRecovery: 2.0,
 
-  // Confidence model (S-curve composite)
-  confWeightCover: 0.20,
-  confWeightPremium: 0.20,
-  confWeightWillingness: 0.25,
-  confWeightEscort: 0.15,
-  confWeightMineThreat: 0.15,
-  confWeightThreat: 0.05,
+  // Attack mechanics (v2 — recalibrated)
+  // attackProb = attackBaseCoeff * (threat/100) * (traffic/100) * escortMod * reserveMod
+  attackBaseCoeff: 0.55,            // base coefficient; with threat=60, traffic=5, this is very low early
+  attackMaxProb: 0.45,              // hard cap — attacks are dangerous, not inevitable
+  escortAttackReduction: 0.6,       // max reduction from full escort allocation
+  reserveInterceptReduction: 0.5,   // max reduction from full reserve allocation
+  attackDamageToConfidence: 18,
+  attackMineThreatBoost: 5,
+
+  // Escort damage mitigation — escorts reduce impact when attacks get through
+  escortDamageReduction: 0.4,       // at full escort, attack damage reduced by 40%
+
+  // Confidence model (multiplicative — S-curve on product of factors)
   confSteepness: 0.08,
   confMidpoint: 50,
 
@@ -935,26 +968,16 @@ const CONFIG = {
   trafficNoiseRange: 2,
 
   // Insurance / Cover
-  coverThreatSensitivity: 1.2,
   coverRecoveryRate: 0.8,
   coverAttackPenalty: 15,
 
   // Premium burden
   premiumBaseline: 20,
-  premiumThreatFactor: 0.6,
-  premiumMinesFactor: 0.3,
   premiumDecayRate: 0.03,
 
   // Operational willingness
   willingnessRecoveryRate: 0.06,
   willingnessAttackPenalty: 20,
-  willingnessMinesPenalty: 0.5,
-
-
-  // Attack mechanics
-  attackBaseChance: 0.03,
-  attackDamageToConfidence: 18,
-  attackMineThreatBoost: 5,
 };
 
 
@@ -962,36 +985,54 @@ const CONFIG = {
 // SCENARIO PRESETS
 // ============================================================
 
+// ============================================================
+// SCENARIO PRESETS
+// Each preset changes only live mechanics. Expected gameplay:
+//
+// Balanced: hard but winnable. Player must sequence suppression → MCM → escorts.
+//   ~30-50 days to win with good prioritization.
+//
+// Optimistic: faster suppression, lower mine threat, easier confidence recovery.
+//   Winnable in ~25-35 days. Tests whether player still sequences correctly.
+//
+// Pessimistic: high threat, degraded basing, slow MCM, severe commercial bottlenecks.
+//   Very hard. Requires near-perfect prioritization. ~50-70 days if winnable.
+//
+// Mine-heavy: mines dominate. Suppression helps (enables MCM) but MCM is the
+//   central bottleneck. Iran keeps laying mines. Tests MCM-under-fire dynamics.
+//
+// Fast reconstitution: Iranian capability regenerates faster than expected.
+//   Sustained suppression required — can't just strike early and shift to MCM.
+// ============================================================
+
 const SCENARIOS = {
   balanced: { label: "Balanced", overrides: {} },
   optimistic: {
     label: "Optimistic for U.S.",
     overrides: {
-      initialThreatPressure: 60, initialMineThreat: 25, initialBaseOperability: 90,
+      initialThreatPressure: 45, initialMineThreat: 25, initialBaseOperability: 90,
       initialCoverAvailability: 25, initialPremiumBurden: 70, initialOperationalWillingness: 20,
       iranReconBaseRate: 2.5, strikeEffectiveness: 0.35, mcmEffectiveness: 0.20,
-      escortBuildRate: 0.10, attackBaseChance: 0.020,
+      escortBuildRate: 0.10, attackBaseCoeff: 0.40,
     }
   },
   pessimistic: {
     label: "Pessimistic for U.S.",
     overrides: {
-      initialThreatPressure: 90, initialMineThreat: 50, initialBaseOperability: 65,
+      initialThreatPressure: 85, initialMineThreat: 50, initialBaseOperability: 65,
       initialCoverAvailability: 5, initialPremiumBurden: 95, initialOperationalWillingness: 5,
       iranReconBaseRate: 6.0, strikeEffectiveness: 0.20, mcmEffectiveness: 0.10,
-      attackBaseChance: 0.040,
+      attackBaseCoeff: 0.65, attackMaxProb: 0.55,
+      coverRecoveryRate: 0.5, willingnessRecoveryRate: 0.04,
     }
   },
   "mine-heavy": {
     label: "Mine-Heavy Disruption",
     overrides: {
-      initialMineThreat: 60, initialThreatPressure: 55,
+      initialMineThreat: 60, initialThreatPressure: 50,
       iranMineWeight: 0.45, iranDroneWeight: 0.15, iranMissileWeight: 0.15,
       iranReconWeight: 0.15, iranBaseAttackWeight: 0.10,
       mcmEffectiveness: 0.11, attackMineThreatBoost: 10,
-      confWeightMineThreat: 0.25, confWeightThreat: 0.05,
-      confWeightCover: 0.15, confWeightPremium: 0.20,
-      confWeightWillingness: 0.20, confWeightEscort: 0.15,
     }
   },
   "fast-recon": {
@@ -1000,6 +1041,7 @@ const SCENARIOS = {
       iranReconBaseRate: 8.0, iranReconWeight: 0.30, iranDroneWeight: 0.25,
       iranMissileWeight: 0.20, iranMineWeight: 0.15, iranBaseAttackWeight: 0.10,
       initialThreatPressure: 70, initialMineThreat: 30,
+      strikeEffectiveness: 0.25,
     }
   }
 };
@@ -1786,18 +1828,31 @@ function simulateDay(pa) {
   // Base defense + recovery
   s.baseOperability += pa.base * cfg.baseDefenseEffect * 0.1 + cfg.baseOperabilityRecovery;
 
-  // --- Attack resolution ---
-  const attackProb = cfg.attackBaseChance * s.threatPressure * (1 - pa.reserve * cfg.reserveInterceptChance);
-  if (chance(clamp(attackProb, 0, 0.85))) {
+  // --- Attack resolution (v2 — recalibrated) ---
+  // Attack probability depends on: Iranian capability, exposed traffic,
+  // escort protection, and reserve intercept capability.
+  // More ships transiting = more targets = higher attack opportunity.
+  // Escorts and reserves both reduce probability meaningfully.
+  const attackOpportunity = clamp(s.trafficFlow / 100, 0.05, 1); // min 0.05 so even minimal traffic can be hit
+  const escortMod = 1 - (pa.escort / cfg.playerBudget) * cfg.escortAttackReduction;
+  const reserveMod = 1 - (pa.reserve / cfg.playerBudget) * cfg.reserveInterceptReduction;
+  const attackProb = cfg.attackBaseCoeff * (s.threatPressure / 100) * attackOpportunity * escortMod * reserveMod;
+
+  if (chance(clamp(attackProb, 0, cfg.attackMaxProb))) {
     s.attackOccurred = true;
     // Place attack marker on the map (fixed position, fades out)
     const atkX = 0.35 + Math.random() * 0.35;
     attackMarker = { x: atkX, y: lerpLane(SHIPPING_LANE, atkX), alpha: 1.0 };
-    s.escortCredibility -= cfg.escortDecayOnAttack;
-    s.coverAvailability -= cfg.coverAttackPenalty;
-    s.operationalWillingness -= cfg.willingnessAttackPenalty;
+
+    // Escorts mitigate damage when attacks get through.
+    // At full escort allocation, damage is reduced by escortDamageReduction.
+    const dmgMod = 1 - (pa.escort / cfg.playerBudget) * cfg.escortDamageReduction;
+
+    s.escortCredibility -= cfg.escortDecayOnAttack * dmgMod;
+    s.coverAvailability -= cfg.coverAttackPenalty * dmgMod;
+    s.operationalWillingness -= cfg.willingnessAttackPenalty * dmgMod;
     s.mineThreat += cfg.attackMineThreatBoost * 0.3;
-    s.merchantConfidence -= cfg.attackDamageToConfidence;
+    s.merchantConfidence -= cfg.attackDamageToConfidence * dmgMod;
 
     const types = [
       "Drone strike damages merchant vessel in transit",
@@ -1808,10 +1863,10 @@ function simulateDay(pa) {
     const attackType = types[Math.floor(Math.random() * types.length)];
     events.push({text: attackType, type: 'attack'});
 
-    // Asymmetric cost messaging — shows why this fight favors Iran
+    // Asymmetric cost messaging
     const costMsgs = [
       "One $20K drone just shut down $50M in daily shipping revenue",
-      "Iran doesn't need to sink ships — one hit collapses insurance cover for weeks",
+      "Iran doesn't need to sink ships — one hit collapses insurance for weeks",
       "Insurance premiums spike 300% — charterers reroute around the Cape, adding 10 days per voyage",
       "A single attack undoes weeks of escort credibility — shippers remember the hit, not the safe days",
       "The interceptor missile cost more than the drone it shot down — and it still got through",
@@ -1819,9 +1874,12 @@ function simulateDay(pa) {
     ];
     events.push({text: costMsgs[Math.floor(Math.random() * costMsgs.length)], type: 'warn'});
     if (s.trafficFlow > 30) events.push({text: "Insurers narrow cover", type: 'warn'});
+    if (dmgMod < 0.75) events.push({text: "Escort presence limits damage from attack", type: 'neutral'});
   }
 
   // --- Escort credibility ---
+  // Escorts have immediate operational value (attack probability + damage reduction above)
+  // AND build long-term credibility through repeated safe transits.
   if (!s.attackOccurred && pa.escort > 30) {
     s.escortCredibility += pa.escort * cfg.escortBuildRate * 0.1;
     if (s.escortCredibility > 40 && s.escortCredibility < 45) {
