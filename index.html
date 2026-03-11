@@ -1,0 +1,2270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reopen Hormuz</title>
+<style>
+/* ============================================================
+   STYLESHEET — Reopen Hormuz
+   Aesthetic: 1980s–90s command-terminal / strategy-sim
+   Map-centric layout with minimal chrome
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:          #0a0e14;
+  --panel-bg:    #0f1520;
+  --panel-border:#1e2a3a;
+  --green:       #33cc66;
+  --green-dim:   #1a6633;
+  --amber:       #ccaa33;
+  --amber-dim:   #665518;
+  --red:         #cc4444;
+  --red-dim:     #662222;
+  --cyan:        #44aacc;
+  --text:        #c8ccd0;
+  --text-dim:    #6a7a8a;
+  --text-bright: #e8ecf0;
+  --heading:     #ddeeff;
+  --sea:         #0b1a2e;
+  --land:        #1a2a1a;
+  --land-stroke: #2a3a2a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ---------- TOP BAR ---------- */
+
+#top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  height: 44px;
+}
+
+.top-left {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 18px;
+  color: var(--heading);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.day-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: var(--amber);
+}
+
+.status-label {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--panel-border);
+  color: var(--amber);
+}
+
+.top-meters {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.mini-meter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  cursor: help;
+}
+
+.mini-meter-bar {
+  width: 60px;
+  height: 8px;
+  background: #0a0e14;
+  border: 1px solid var(--panel-border);
+}
+
+.mini-meter-fill {
+  height: 100%;
+  transition: width 0.4s;
+}
+
+.mini-meter-val {
+  font-size: 11px;
+  color: var(--text-bright);
+  font-weight: 600;
+  min-width: 30px;
+}
+
+/* ---------- MAIN LAYOUT ---------- */
+
+#main {
+  display: grid;
+  grid-template-columns: 220px 1fr 280px;
+  height: calc(100vh - 44px);
+}
+
+.panel {
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* ---------- LEFT PANEL ---------- */
+
+#left-panel {
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.budget-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.budget-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.alloc-group {
+  margin-bottom: 10px;
+}
+
+.alloc-group label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text);
+  margin-bottom: 2px;
+  cursor: help;
+}
+
+.alloc-group .alloc-val {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.alloc-group input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  background: #1a2030;
+  border: 1px solid var(--panel-border);
+  outline: none;
+}
+
+.alloc-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  background: var(--green);
+  border: none;
+  cursor: pointer;
+}
+
+.alloc-group input[type="range"]::-moz-range-thumb {
+  width: 12px; height: 12px;
+  background: var(--green);
+  border: none;
+  cursor: pointer;
+}
+
+#advance-btn {
+  flex: 1;
+  padding: 9px;
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#advance-btn:hover { background: #226644; }
+#advance-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.advance-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+#advance5-btn {
+  flex: 1;
+  padding: 9px;
+  background: #1a3a2a;
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#advance5-btn:hover { background: #226644; }
+#advance5-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.scenario-row {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.scenario-row select {
+  width: 100%;
+  padding: 5px;
+  background: #0a0e14;
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+
+#reset-btn {
+  width: 100%;
+  padding: 5px;
+  background: transparent;
+  color: var(--amber);
+  border: 1px solid var(--amber-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+#reset-btn:hover { background: var(--amber-dim); }
+
+/* ---------- CENTER: MAP + CHARTS ---------- */
+
+#center-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+  z-index: 0;
+}
+
+#map-container {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+#map-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: relative;
+  z-index: 0;
+}
+
+/* Map overlay labels */
+.map-overlay-stats {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  gap: 14px;
+  font-size: 10px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.map-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* Charts row at bottom */
+#charts-row {
+  height: 130px;
+  min-height: 130px;
+  display: flex;
+  border-top: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.chart-cell {
+  flex: 1;
+  padding: 6px 8px;
+  border-right: 1px solid var(--panel-border);
+  overflow: hidden;
+}
+
+.chart-cell:last-child { border-right: none; }
+
+.chart-cell .chart-title {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.chart-cell canvas {
+  width: 100%;
+  height: 95px;
+  display: block;
+}
+
+/* ---------- RIGHT PANEL ---------- */
+
+#right-panel {
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+}
+
+#event-log {
+  flex: 1;
+  overflow-y: auto;
+  background: #0a0e14;
+  border: 1px solid var(--panel-border);
+  padding: 6px 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.log-entry {
+  padding: 4px 0;
+  border-bottom: 1px solid #111822;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.log-day {
+  color: var(--text-dim);
+  font-size: 9px;
+  font-weight: 600;
+  min-width: 26px;
+  flex-shrink: 0;
+}
+
+.log-entry.log-attack { color: var(--red); }
+.log-entry.log-attack .log-day { color: var(--red); }
+.log-entry.log-good { color: var(--green); }
+.log-entry.log-warn { color: var(--amber); }
+.log-entry.log-neutral { color: var(--text-dim); }
+
+/* --- Shipper Outlook --- */
+
+.shipper-outlook {
+  background: #0a0e14;
+  border: 1px solid var(--panel-border);
+  padding: 8px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.outlook-item {
+  padding: 5px 0;
+  border-bottom: 1px solid #111822;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.outlook-item:last-child { border-bottom: none; }
+
+.outlook-icon {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 5px;
+}
+
+.outlook-icon.red { background: var(--red); }
+.outlook-icon.amber { background: var(--amber); }
+.outlook-icon.green { background: var(--green); }
+
+.outlook-speaker {
+  color: var(--text-dim);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.outlook-text {
+  color: var(--text);
+}
+
+.kv-box {
+  background: #0a0e14;
+  border: 1px solid var(--panel-border);
+  padding: 5px 7px;
+  cursor: help;
+}
+
+.kv-box .kv-name {
+  font-size: 8px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.kv-box .kv-val {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.info-toggle {
+  font-size: 10px;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px 0;
+  border-top: 1px solid var(--panel-border);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-toggle:hover { color: var(--text); }
+
+.info-content {
+  display: none;
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  padding: 8px;
+  border: 1px solid var(--panel-border);
+  background: #0a0e14;
+  margin-top: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.info-content.open { display: block; }
+
+/* ---------- TOOLTIP (JS-driven, appended to body) ---------- */
+
+#tooltip {
+  display: none;
+  position: fixed;
+  background: #1a2030;
+  color: var(--text);
+  padding: 7px 10px;
+  font-size: 10px;
+  line-height: 1.5;
+  width: 230px;
+  border: 1px solid var(--panel-border);
+  z-index: 99999;
+  pointer-events: none;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+#tooltip.visible { display: block; }
+
+/* ---------- OUTCOME OVERLAY ---------- */
+
+#outcome-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+
+#outcome-overlay.active { display: flex; }
+
+.outcome-box {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  padding: 28px 36px;
+  max-width: 460px;
+  text-align: center;
+}
+
+.outcome-box h2 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 18px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.outcome-box p {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.outcome-box button {
+  padding: 7px 18px;
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.outcome-box button:hover { background: #226644; }
+
+/* ---------- BRIEFING OVERLAY ---------- */
+
+#briefing-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+#briefing-overlay.hidden { display: none; }
+
+.briefing-box {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  padding: 32px 40px;
+  max-width: 520px;
+  width: 90%;
+}
+
+.briefing-box .briefing-header {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--red);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.briefing-box h2 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 18px;
+  color: var(--heading);
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.briefing-box .briefing-body {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.briefing-box .briefing-body .highlight {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.briefing-box .briefing-body .stat-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 11px;
+}
+
+.briefing-box .briefing-body .stat-line .stat-val {
+  font-weight: 600;
+}
+
+.briefing-box .briefing-objective {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid var(--panel-border);
+  background: #0a0e14;
+}
+
+.briefing-box .briefing-objective strong {
+  color: var(--green);
+}
+
+.briefing-box .briefing-note {
+  font-size: 9px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 18px;
+  font-style: italic;
+}
+
+.briefing-box button {
+  width: 100%;
+  padding: 10px;
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.briefing-box button:hover { background: #226644; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--panel-border); }
+
+@media (max-width: 900px) {
+  #main { grid-template-columns: 1fr; height: auto; }
+  .panel { border: none; border-bottom: 1px solid var(--panel-border); }
+  #map-container { height: 50vh; }
+}
+</style>
+</head>
+<body>
+<div id="tooltip"></div>
+
+<!-- TOP BAR -->
+<div id="top-bar">
+  <div class="top-left">
+    <span class="title">Reopen Hormuz</span>
+    <span class="day-label" id="day-label">Day 0</span>
+    <span class="status-label" id="status-label">Standby</span>
+  </div>
+  <div class="top-meters">
+    <div class="mini-meter" data-tooltip="How much commercial shipping is moving through Hormuz right now. You win when this stays above 70%.">
+      <span>Ships Transiting</span>
+      <div class="mini-meter-bar"><div class="mini-meter-fill" id="meter-traffic" style="background:var(--green);width:0%"></div></div>
+      <span class="mini-meter-val" id="meter-traffic-val">0%</span>
+    </div>
+    <div class="mini-meter" data-tooltip="Will shippers, insurers, and crews actually use the strait? This is the bottleneck — military wins don't automatically raise it.">
+      <span>Shipper Confidence</span>
+      <div class="mini-meter-bar"><div class="mini-meter-fill" id="meter-confidence" style="background:var(--amber);width:0%"></div></div>
+      <span class="mini-meter-val" id="meter-confidence-val">0%</span>
+    </div>
+    <div class="mini-meter" data-tooltip="Mines in shipping lanes. Extremely slow to clear — even suspected mines shut down traffic. The stickiest barrier to reopening.">
+      <span>Mine Danger</span>
+      <div class="mini-meter-bar"><div class="mini-meter-fill" id="meter-mines" style="background:var(--red);width:0%"></div></div>
+      <span class="mini-meter-val" id="meter-mines-val">0%</span>
+    </div>
+    <div class="mini-meter" data-tooltip="Iran's remaining strike capability — drones, missiles, fast boats. Degrades with strikes but reconstitutes from dispersed, hardened sites.">
+      <span>Iranian Capabilities</span>
+      <div class="mini-meter-bar"><div class="mini-meter-fill" id="meter-capability" style="background:var(--red);width:0%"></div></div>
+      <span class="mini-meter-val" id="meter-capability-val">0%</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN 3-COL -->
+<div id="main">
+
+  <!-- LEFT: Controls -->
+  <div class="panel" id="left-panel">
+    <div class="panel-title">Mission Allocation</div>
+    <div class="budget-row">
+      <span>Effort remaining</span>
+      <span class="budget-val" id="budget-remaining">200</span>
+    </div>
+
+    <div class="alloc-group" data-tooltip="Hit Iranian launch sites, missile batteries, and drone staging. Directly reduces threat level.">
+      <label>Strike / Suppress <span class="alloc-val" id="val-strike">40</span></label>
+      <input type="range" id="slider-strike" min="0" max="200" value="40">
+    </div>
+    <div class="alloc-group" data-tooltip="Sweep and clear mines from shipping lanes. Slow, painstaking work — but neglecting it keeps the strait closed.">
+      <label>Mine Clearing <span class="alloc-val" id="val-mcm">40</span></label>
+      <input type="range" id="slider-mcm" min="0" max="200" value="40">
+    </div>
+    <div class="alloc-group" data-tooltip="Escort merchant convoys through the strait. Trust builds only through repeated safe passage — not announcements.">
+      <label>Convoy Escort <span class="alloc-val" id="val-escort">40</span></label>
+      <input type="range" id="slider-escort" min="0" max="200" value="40">
+    </div>
+    <div class="alloc-group" data-tooltip="Protect 5th Fleet forward bases from Iranian counter-strikes. Low readiness = fewer sorties, slower response.">
+      <label>Base Defense <span class="alloc-val" id="val-base">40</span></label>
+      <input type="range" id="slider-base" min="0" max="200" value="40">
+    </div>
+    <div class="alloc-group" data-tooltip="Hold reserves for air defense and surge intercept. Reduces the chance Iranian attacks get through.">
+      <label>Reserve / Intercept <span class="alloc-val" id="val-reserve">40</span></label>
+      <input type="range" id="slider-reserve" min="0" max="200" value="40">
+    </div>
+
+    <div class="advance-row">
+      <button id="advance-btn">Advance Day</button>
+      <button id="advance5-btn">Advance 5 Days</button>
+    </div>
+
+    <div class="scenario-row">
+      <select id="scenario-select">
+        <option value="balanced">Balanced</option>
+        <option value="optimistic">Optimistic for U.S.</option>
+        <option value="pessimistic">Pessimistic for U.S.</option>
+        <option value="mine-heavy">Mine-Heavy Disruption</option>
+        <option value="fast-recon">Fast Reconstitution</option>
+      </select>
+      <button id="reset-btn">Reset</button>
+    </div>
+  </div>
+
+  <!-- CENTER: Map + Charts -->
+  <div id="center-panel">
+    <div id="map-container">
+      <canvas id="map-canvas"></canvas>
+      <div class="map-overlay-stats">
+        <div class="map-stat"><div class="map-stat-dot" style="background:var(--red)"></div> Mines</div>
+        <div class="map-stat"><div class="map-stat-dot" style="background:var(--amber)"></div> Threat zones</div>
+        <div class="map-stat"><div class="map-stat-dot" style="background:var(--green)"></div> Shipping</div>
+        <div class="map-stat"><div class="map-stat-dot" style="background:var(--cyan)"></div> U.S. Navy</div>
+      </div>
+    </div>
+    <div id="charts-row">
+      <div class="chart-cell" data-tooltip="Percentage of normal commercial shipping moving through Hormuz. You win by sustaining this above 70% for 7 consecutive days.">
+        <div class="chart-title">Traffic Flow</div>
+        <canvas id="chart-traffic" height="95"></canvas>
+      </div>
+      <div class="chart-cell" data-tooltip="This is the core insight: the red line (Iranian capability) can drop fast with strikes, but the amber line (shipper confidence) stays low long after. Military success doesn't automatically reopen the strait — mines, insurance, and crew willingness lag far behind.">
+        <div class="chart-title">Capabilities vs Confidence</div>
+        <canvas id="chart-cap-conf" height="95"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Log + Vars -->
+  <div class="panel" id="right-panel">
+    <div class="panel-title">Events</div>
+    <div id="event-log"></div>
+
+    <div class="panel-title" style="margin-top:10px;">Why Ships Aren't Crossing</div>
+    <div id="shipper-outlook" class="shipper-outlook"></div>
+
+    <div class="info-toggle" id="info-toggle">&#9662; About this model</div>
+    <div class="info-content" id="info-content">
+      <strong style="color:var(--amber)">What this teaches:</strong><br>
+      Closing a chokepoint can be easier than making it safe enough for commerce to resume.
+      Watch how military success against Iranian forces does not automatically restore shipping.<br><br>
+      <strong style="color:var(--amber)">Win:</strong> Traffic above 70% for 7 consecutive days.<br>
+      <strong style="color:var(--amber)">Lose:</strong> 60 days below 30% traffic = global recession + permanent rerouting.<br><br>
+      <strong style="color:var(--amber)">Tips:</strong><br>
+      &bull; Mine threat is sticky — neglecting MCM is costly.<br>
+      &bull; Escort credibility builds slowly through safe passage.<br>
+      &bull; One attack during recovery undoes weeks of progress.<br>
+      &bull; You can't do everything — tradeoffs matter.<br><br>
+      <span style="font-size:9px">This simulator is an explanatory toy model inspired by public analysis of Hormuz
+      closure scenarios, mine warfare, and commercial shipping risk. It illustrates
+      mechanisms and tradeoffs; it does not predict real-world outcomes.</span>
+    </div>
+  </div>
+</div>
+
+<!-- BRIEFING OVERLAY -->
+<div id="briefing-overlay">
+  <div class="briefing-box">
+    <div class="briefing-header">Situation Brief — Day 0</div>
+    <h2>REOPEN HORMUZ</h2>
+
+    <div class="briefing-body">
+      Joint U.S.–Israeli strikes have destroyed Iran's air defenses, giving the U.S. military
+      freedom of action in the air.
+
+      <br><br>
+
+      But Iran has effectively closed the Strait of Hormuz with drones, missiles, and mines.
+      ~20 million barrels per day — a fifth of global oil supply — is blocked.
+
+      <div style="margin-top:14px;">
+        <div class="stat-line"><span>Strait traffic</span><span class="stat-val" style="color:var(--red)">Down 97%</span></div>
+        <div class="stat-line"><span>Oil price</span><span class="stat-val" style="color:var(--red)">$110+/bbl, rising</span></div>
+        <div class="stat-line"><span>War-risk insurance</span><span class="stat-val" style="color:var(--red)">Withdrawn</span></div>
+        <div class="stat-line"><span>Iranian mines</span><span class="stat-val" style="color:var(--red)">Laid across shipping lanes</span></div>
+        <div class="stat-line"><span>U.S. air superiority</span><span class="stat-val" style="color:var(--green)">Established</span></div>
+      </div>
+    </div>
+
+    <div class="briefing-objective">
+      <strong>Your mission:</strong> Reopen the strait for commercial shipping.
+      You command 5th Fleet assets — allocate daily effort across strike, mine clearance,
+      escort, base defense, and reserves.
+
+      <br><br>
+
+      <strong>Win:</strong> Sustain traffic above 70% for 7 consecutive days.
+
+      <br><br>
+
+      <strong>The stakes:</strong> Every day the strait stays closed, oil climbs higher. Economists
+      estimate a global recession locks in after ~30 days of closure at $150+/bbl. By 60 days, supply
+      chains permanently reroute and the fertilizer shock threatens the next harvest. The clock is ticking.
+
+      <br><br>
+
+      <strong>The challenge:</strong> Military dominance must translate into commercial confidence.
+      Shippers, insurers, and crews need to believe the strait is safe — not just that Iran is losing.
+    </div>
+
+    <button id="briefing-start">Begin Operations</button>
+  </div>
+</div>
+
+<!-- OUTCOME OVERLAY -->
+<div id="outcome-overlay">
+  <div class="outcome-box">
+    <h2 id="outcome-title"></h2>
+    <p id="outcome-text"></p>
+    <button onclick="resetGame()">Try Again</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION — Central tuning section
+// All variable weights, rates, and ranges collected here.
+// ============================================================
+
+const CONFIG = {
+  // Win / Lose
+  winTrafficThreshold: 70,
+  winConsecutiveDays: 7,
+  maxDays: 90,
+  // Lose: economic damage thresholds
+  // At 30 days below 30% traffic, global recession locks in ($150+/bbl oil)
+  // At 60 days below 30%, structural damage — supply chains permanently reroute
+  loseRecessionDays: 30,       // Days below threshold before recession
+  loseRecessionFloor: 30,      // Traffic % threshold
+  loseStructuralDays: 60,      // Days below threshold before structural damage
+
+  // Initial state
+  initialTraffic: 5,
+  initialConfidence: 8,
+  initialThreatPressure: 75,
+  initialMineThreat: 65,
+  initialBaseOperability: 80,
+  initialEscortCredibility: 10,
+  initialCoverAvailability: 15,
+  initialPremiumBurden: 85,
+  initialOperationalWillingness: 10,
+
+  // Player budget
+  playerBudget: 200,
+
+  // Iranian AI
+  iranBudget: 100,
+  iranReconBaseRate: 4.0,
+  iranDroneWeight: 0.30,
+  iranMissileWeight: 0.20,
+  iranMineWeight: 0.25,
+  iranReconWeight: 0.15,
+  iranBaseAttackWeight: 0.10,
+  iranAdaptiveness: 0.3,
+
+  // U.S. effectiveness (per-unit rates scaled for 200-point budget)
+  strikeEffectiveness: 0.275,
+  mcmEffectiveness: 0.15,
+  escortBuildRate: 0.075,
+  escortDecayOnAttack: 25,
+  baseDefenseEffect: 0.2,
+  reserveInterceptChance: 0.003,
+  baseOperabilityRecovery: 2.0,
+
+  // Confidence model (S-curve composite)
+  confWeightCover: 0.20,
+  confWeightPremium: 0.20,
+  confWeightWillingness: 0.25,
+  confWeightEscort: 0.15,
+  confWeightMineThreat: 0.15,
+  confWeightThreat: 0.05,
+  confSteepness: 0.08,
+  confMidpoint: 50,
+
+  // Traffic model (asymmetric)
+  trafficCollapseThreshold: 35,
+  trafficRecoveryRate: 0.12,
+  trafficCollapseRate: 0.35,
+  trafficMinResidual: 3,
+  trafficNoiseRange: 2,
+
+  // Insurance / Cover
+  coverThreatSensitivity: 1.2,
+  coverRecoveryRate: 0.8,
+  coverAttackPenalty: 15,
+
+  // Premium burden
+  premiumBaseline: 20,
+  premiumThreatFactor: 0.6,
+  premiumMinesFactor: 0.3,
+  premiumDecayRate: 0.03,
+
+  // Operational willingness
+  willingnessRecoveryRate: 0.06,
+  willingnessAttackPenalty: 20,
+  willingnessMinesPenalty: 0.5,
+
+
+  // Attack mechanics
+  attackBaseChance: 0.03,
+  attackDamageToConfidence: 18,
+  attackMineThreatBoost: 5,
+};
+
+
+// ============================================================
+// SCENARIO PRESETS
+// ============================================================
+
+const SCENARIOS = {
+  balanced: { label: "Balanced", overrides: {} },
+  optimistic: {
+    label: "Optimistic for U.S.",
+    overrides: {
+      initialThreatPressure: 60, initialMineThreat: 45, initialBaseOperability: 90,
+      initialCoverAvailability: 25, initialPremiumBurden: 70, initialOperationalWillingness: 20,
+      iranReconBaseRate: 2.5, strikeEffectiveness: 0.35, mcmEffectiveness: 0.20,
+      escortBuildRate: 0.10, attackBaseChance: 0.020,
+    }
+  },
+  pessimistic: {
+    label: "Pessimistic for U.S.",
+    overrides: {
+      initialThreatPressure: 90, initialMineThreat: 80, initialBaseOperability: 65,
+      initialCoverAvailability: 5, initialPremiumBurden: 95, initialOperationalWillingness: 5,
+      iranReconBaseRate: 6.0, strikeEffectiveness: 0.20, mcmEffectiveness: 0.10,
+      attackBaseChance: 0.040,
+    }
+  },
+  "mine-heavy": {
+    label: "Mine-Heavy Disruption",
+    overrides: {
+      initialMineThreat: 90, initialThreatPressure: 55,
+      iranMineWeight: 0.45, iranDroneWeight: 0.15, iranMissileWeight: 0.15,
+      iranReconWeight: 0.15, iranBaseAttackWeight: 0.10,
+      mcmEffectiveness: 0.11, attackMineThreatBoost: 10,
+      confWeightMineThreat: 0.25, confWeightThreat: 0.05,
+      confWeightCover: 0.15, confWeightPremium: 0.20,
+      confWeightWillingness: 0.20, confWeightEscort: 0.15,
+    }
+  },
+  "fast-recon": {
+    label: "Fast Reconstitution",
+    overrides: {
+      iranReconBaseRate: 8.0, iranReconWeight: 0.30, iranDroneWeight: 0.25,
+      iranMissileWeight: 0.20, iranMineWeight: 0.15, iranBaseAttackWeight: 0.10,
+      initialThreatPressure: 70, initialMineThreat: 50,
+    }
+  }
+};
+
+
+// ============================================================
+// GAME STATE
+// ============================================================
+
+let cfg = {};
+let state = {};
+let history = {};
+let gameOver = false;
+let attackMarker = null; // { x, y, alpha } — fades out over frames
+let winStreak = 0;
+let lowTrafficDays = 0;
+
+// Persistent random seeds for mine positions and ship positions
+let minePositions = [];
+let shipEntities = [];
+let usPositions = [];
+let threatZones = [];
+
+
+// ============================================================
+// MAP GEOMETRY — Stylized Strait of Hormuz
+// ============================================================
+
+// All coordinates are in a 0-1 normalized space, mapped to canvas at render time.
+// Iran coast (north), UAE/Oman coast (south), strait narrows in the middle.
+
+// Iran coastline (top) — runs roughly west to east
+const IRAN_COAST = [
+  [0.00, 0.00], [0.10, 0.00], [0.20, 0.05], [0.28, 0.12],
+  [0.33, 0.18], [0.38, 0.22], [0.42, 0.20], [0.46, 0.24],
+  [0.50, 0.28], [0.54, 0.26], [0.58, 0.22], [0.62, 0.18],
+  [0.66, 0.22], [0.70, 0.28], [0.73, 0.30], [0.76, 0.26],
+  [0.80, 0.22], [0.85, 0.18], [0.88, 0.15], [0.92, 0.10],
+  [0.96, 0.05], [1.00, 0.00],
+];
+
+// UAE / Oman coastline (bottom)
+const ARAB_COAST = [
+  [0.00, 0.55], [0.05, 0.58], [0.10, 0.62], [0.15, 0.65],
+  [0.18, 0.70], [0.22, 0.72], [0.25, 0.68], [0.28, 0.65],
+  [0.32, 0.68], [0.35, 0.72], [0.38, 0.75], [0.42, 0.72],
+  [0.46, 0.68], [0.50, 0.65], [0.54, 0.68], [0.58, 0.72],
+  [0.62, 0.75], [0.66, 0.72], [0.70, 0.68], [0.75, 0.72],
+  [0.80, 0.78], [0.85, 0.82], [0.90, 0.85], [0.95, 0.90],
+  [1.00, 1.00],
+];
+
+// Shipping lane — the main transit corridor through the strait
+const SHIPPING_LANE = [
+  [0.02, 0.42], [0.10, 0.40], [0.20, 0.38], [0.30, 0.42],
+  [0.40, 0.46], [0.50, 0.48], [0.60, 0.46], [0.70, 0.50],
+  [0.80, 0.52], [0.90, 0.50], [0.98, 0.48],
+];
+
+// Secondary lane (inbound vs outbound)
+const SHIPPING_LANE_2 = [
+  [0.02, 0.48], [0.10, 0.47], [0.20, 0.45], [0.30, 0.48],
+  [0.40, 0.52], [0.50, 0.54], [0.60, 0.52], [0.70, 0.55],
+  [0.80, 0.58], [0.90, 0.56], [0.98, 0.54],
+];
+
+
+// ============================================================
+// RANDOM ENTITY GENERATION for map
+// ============================================================
+
+function generateMinePositions(count) {
+  minePositions = [];
+  for (let i = 0; i < count; i++) {
+    // Mines cluster near the shipping lanes in the narrows (x: 0.3–0.8)
+    const t = 0.25 + Math.random() * 0.55;
+    const laneY = lerpLane(SHIPPING_LANE, t);
+    const offset = (Math.random() - 0.5) * 0.14;
+    minePositions.push({
+      x: t,
+      y: laneY + offset,
+      active: true,
+      drift: Math.random() * Math.PI * 2,
+    });
+  }
+}
+
+function generateusPositions() {
+  usPositions = [
+    { x: 0.12, y: 0.50, type: 'base', label: '5TH FLEET FWD' },
+    { x: 0.85, y: 0.70, type: 'base', label: 'LOGISTICS BASE' },
+    { x: 0.45, y: 0.58, type: 'escort', label: '' },
+    { x: 0.60, y: 0.42, type: 'escort', label: '' },
+    { x: 0.35, y: 0.35, type: 'patrol', label: '' },
+    { x: 0.72, y: 0.38, type: 'patrol', label: '' },
+  ];
+}
+
+function generateThreatZones() {
+  threatZones = [
+    { x: 0.38, y: 0.22, r: 0.08, label: 'COASTAL BATTERY' },
+    { x: 0.55, y: 0.18, r: 0.06, label: '' },
+    { x: 0.70, y: 0.28, r: 0.07, label: 'LAUNCH SITE' },
+    { x: 0.48, y: 0.30, r: 0.05, label: '' },
+  ];
+}
+
+function lerpLane(lane, t) {
+  // Interpolate y position along a shipping lane at parameter t (0-1 in x)
+  for (let i = 0; i < lane.length - 1; i++) {
+    if (t >= lane[i][0] && t <= lane[i+1][0]) {
+      const f = (t - lane[i][0]) / (lane[i+1][0] - lane[i][0]);
+      return lane[i][1] + f * (lane[i+1][1] - lane[i][1]);
+    }
+  }
+  return lane[lane.length-1][1];
+}
+
+function generateShips(count) {
+  shipEntities = [];
+  for (let i = 0; i < count; i++) {
+    const lane = Math.random() > 0.5 ? SHIPPING_LANE : SHIPPING_LANE_2;
+    const t = Math.random();
+    shipEntities.push({
+      x: t,
+      y: lerpLane(lane, t) + (Math.random() - 0.5) * 0.03,
+      speed: 0.003 + Math.random() * 0.004,
+      lane: lane,
+      active: true,
+    });
+  }
+}
+
+
+// ============================================================
+// MAP RENDERING
+// ============================================================
+
+function drawMap() {
+  const canvas = document.getElementById('map-canvas');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const w = rect.width;
+  const h = rect.height;
+
+  // Map coordinate transform
+  const mx = (nx) => nx * w;
+  const my = (ny) => ny * h;
+
+  // --- Background: sea ---
+  ctx.fillStyle = '#081422';
+  ctx.fillRect(0, 0, w, h);
+
+  // Grid lines (subtle)
+  ctx.strokeStyle = '#0e1c2e';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 10; i++) {
+    ctx.beginPath();
+    ctx.moveTo(mx(i/10), 0);
+    ctx.lineTo(mx(i/10), h);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, my(i/10));
+    ctx.lineTo(w, my(i/10));
+    ctx.stroke();
+  }
+
+  // --- Iran landmass (north) ---
+  ctx.fillStyle = '#121e12';
+  ctx.strokeStyle = '#2a3a2a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(mx(0), my(0));
+  IRAN_COAST.forEach(p => ctx.lineTo(mx(p[0]), my(p[1])));
+  ctx.lineTo(mx(1), my(0));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // --- Arab coast (south) ---
+  ctx.fillStyle = '#121e12';
+  ctx.beginPath();
+  ARAB_COAST.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(mx(p[0]), my(p[1]));
+    else ctx.lineTo(mx(p[0]), my(p[1]));
+  });
+  ctx.lineTo(mx(1), my(1));
+  ctx.lineTo(mx(0), my(1));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // --- Labels ---
+  ctx.font = '11px Share Tech Mono, monospace';
+  ctx.fillStyle = '#2a4a2a';
+  ctx.textAlign = 'center';
+  ctx.fillText('IRAN', mx(0.35), my(0.10));
+  ctx.fillText('UAE', mx(0.20), my(0.72));
+  ctx.fillText('OMAN', mx(0.75), my(0.82));
+
+  ctx.font = '9px IBM Plex Mono, monospace';
+  ctx.fillStyle = '#1a3050';
+  ctx.fillText('PERSIAN GULF', mx(0.12), my(0.38));
+  ctx.fillText('GULF OF OMAN', mx(0.90), my(0.42));
+
+  // --- Shipping lanes (dashed) ---
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(51, 204, 102, 0.15)';
+  ctx.lineWidth = 8;
+  drawPath(ctx, SHIPPING_LANE, mx, my);
+  drawPath(ctx, SHIPPING_LANE_2, mx, my);
+  ctx.setLineDash([]);
+
+  // --- Threat zones (Iranian) ---
+  const threatAlpha = clamp(state.threatPressure / 100, 0.1, 0.8);
+  threatZones.forEach(tz => {
+    const r = tz.r * Math.min(w, h) * (0.5 + state.threatPressure / 200);
+    ctx.beginPath();
+    ctx.arc(mx(tz.x), my(tz.y), r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(204, 68, 68, ${threatAlpha * 0.15})`;
+    ctx.fill();
+    ctx.strokeStyle = `rgba(204, 68, 68, ${threatAlpha * 0.4})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    if (tz.label && w > 600) {
+      ctx.font = '8px IBM Plex Mono, monospace';
+      ctx.fillStyle = `rgba(204, 68, 68, ${threatAlpha * 0.6})`;
+      ctx.textAlign = 'center';
+      ctx.fillText(tz.label, mx(tz.x), my(tz.y) - r - 3);
+    }
+  });
+
+  // --- Dispersed drone/missile launch points (along Iranian coast) ---
+  // These appear and disappear to show that launches come from everywhere
+  if (state.threatPressure > 10) {
+    const launchCount = Math.floor(state.threatPressure / 8);
+    for (let i = 0; i < launchCount; i++) {
+      // Pseudo-random but deterministic per frame + index so they don't flicker wildly
+      const seed = state.day * 7 + i * 13;
+      const lx = 0.25 + ((Math.sin(seed * 0.73) + 1) / 2) * 0.55;
+      // Place along Iranian coast, slightly inland
+      const coastY = IRAN_COAST[Math.floor(((Math.sin(seed * 1.1) + 1) / 2) * (IRAN_COAST.length - 1))];
+      const ly = coastY[1] + 0.01 + ((Math.sin(seed * 2.3) + 1) / 2) * 0.04;
+
+      // Small upward-pointing triangle = launch indicator
+      const pulse = (Math.sin(Date.now() * 0.003 + i * 1.5) + 1) / 2;
+      const alpha = 0.2 + pulse * 0.4;
+      ctx.fillStyle = `rgba(204, 68, 68, ${alpha})`;
+      const px = mx(lx), py = my(ly);
+      ctx.beginPath();
+      ctx.moveTo(px, py - 4);
+      ctx.lineTo(px - 2.5, py + 2);
+      ctx.lineTo(px + 2.5, py + 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Occasional "launch trail" line toward the strait
+      if (pulse > 0.7 && state.threatPressure > 40) {
+        ctx.strokeStyle = `rgba(204, 68, 68, ${(pulse - 0.7) * 0.5})`;
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        const targetY = lerpLane(SHIPPING_LANE, lx);
+        ctx.lineTo(mx(lx), my(targetY));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+
+  // --- Mine field ---
+  const visibleMines = Math.round(minePositions.length * (state.mineThreat / 100));
+  for (let i = 0; i < visibleMines; i++) {
+    const m = minePositions[i];
+    const pulse = Math.sin(state.day * 0.3 + m.drift) * 0.3 + 0.7;
+    const sz = 2 + pulse;
+    ctx.beginPath();
+    ctx.arc(mx(m.x), my(m.y), sz, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(204, 68, 68, ${0.4 + pulse * 0.3})`;
+    ctx.fill();
+  }
+
+  // Minefield zone shading
+  if (state.mineThreat > 20) {
+    const mineAlpha = state.mineThreat / 400;
+    ctx.fillStyle = `rgba(204, 68, 68, ${mineAlpha})`;
+    ctx.beginPath();
+    ctx.ellipse(mx(0.52), my(0.47), mx(0.22), my(0.08), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // --- Shipping (green dots moving along lanes) ---
+  const activeShips = Math.round(shipEntities.length * (state.trafficFlow / 100));
+  for (let i = 0; i < shipEntities.length; i++) {
+    const ship = shipEntities[i];
+    // Animate position
+    ship.x += ship.speed;
+    if (ship.x > 1.02) { ship.x = -0.02; }
+    ship.y = lerpLane(ship.lane, clamp(ship.x, 0, 1)) + (Math.sin(ship.x * 20) * 0.01);
+
+    if (i < activeShips) {
+      // Active ship
+      ctx.fillStyle = 'rgba(51, 204, 102, 0.8)';
+      // Small triangle for ship
+      const sx = mx(ship.x), sy = my(ship.y);
+      ctx.beginPath();
+      ctx.moveTo(sx + 5, sy);
+      ctx.lineTo(sx - 3, sy - 2.5);
+      ctx.lineTo(sx - 3, sy + 2.5);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // --- U.S. assets ---
+  usPositions.forEach(cp => {
+    const opAlpha = state.baseOperability / 100;
+    if (cp.type === 'base') {
+      // Base: small square
+      const sz = 5;
+      ctx.fillStyle = `rgba(68, 170, 204, ${opAlpha * 0.8})`;
+      ctx.fillRect(mx(cp.x) - sz, my(cp.y) - sz, sz*2, sz*2);
+      ctx.strokeStyle = `rgba(68, 170, 204, ${opAlpha})`;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(mx(cp.x) - sz, my(cp.y) - sz, sz*2, sz*2);
+      if (cp.label && w > 600) {
+        ctx.font = '8px Share Tech Mono, monospace';
+        ctx.fillStyle = `rgba(68, 170, 204, ${opAlpha * 0.7})`;
+        ctx.textAlign = 'center';
+        ctx.fillText(cp.label, mx(cp.x), my(cp.y) + sz + 10);
+      }
+    } else if (cp.type === 'escort') {
+      // Escort: small diamond
+      const escAlpha = state.escortCredibility / 100;
+      ctx.fillStyle = `rgba(68, 170, 204, ${0.3 + escAlpha * 0.5})`;
+      ctx.beginPath();
+      const ex = mx(cp.x), ey = my(cp.y);
+      // Move escorts along shipping lane
+      const drift = Math.sin(state.day * 0.2 + cp.x * 10) * 0.03;
+      ctx.moveTo(ex, ey - 4 + my(drift));
+      ctx.lineTo(ex + 4, ey + my(drift));
+      ctx.lineTo(ex, ey + 4 + my(drift));
+      ctx.lineTo(ex - 4, ey + my(drift));
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Patrol: small dot
+      ctx.beginPath();
+      const px = mx(cp.x) + Math.sin(state.day * 0.15 + cp.y * 20) * 8;
+      const py = my(cp.y) + Math.cos(state.day * 0.15 + cp.x * 20) * 8;
+      ctx.arc(px, py, 3, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(68, 170, 204, 0.5)`;
+      ctx.fill();
+    }
+  });
+
+  // --- Attack marker (fades out over time) ---
+  if (attackMarker && attackMarker.alpha > 0) {
+    const am = attackMarker;
+    ctx.beginPath();
+    ctx.arc(mx(am.x), my(am.y), 12, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 100, 50, ${am.alpha * 0.5})`;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(mx(am.x), my(am.y), 5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 200, 100, ${am.alpha * 0.7})`;
+    ctx.fill();
+
+    // Small "x" instead of shouty label
+    ctx.strokeStyle = `rgba(255, 100, 50, ${am.alpha * 0.8})`;
+    ctx.lineWidth = 1.5;
+    const cx = mx(am.x), cy = my(am.y);
+    ctx.beginPath(); ctx.moveTo(cx-4, cy-4); ctx.lineTo(cx+4, cy+4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+4, cy-4); ctx.lineTo(cx-4, cy+4); ctx.stroke();
+
+    // Fade out
+    am.alpha -= 0.008;
+  }
+
+  // --- STRAIT OF HORMUZ label ---
+  ctx.font = '10px Share Tech Mono, monospace';
+  ctx.fillStyle = '#1e3a5e';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '3px';
+  ctx.fillText('S T R A I T   O F   H O R M U Z', mx(0.50), my(0.60));
+}
+
+function drawPath(ctx, points, mx, my) {
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(mx(p[0]), my(p[1]));
+    else ctx.lineTo(mx(p[0]), my(p[1]));
+  });
+  ctx.stroke();
+}
+
+
+// ============================================================
+// CHART RENDERING
+// ============================================================
+
+function drawChart(canvasId, datasets) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  const w = rect.width - 16; // account for padding
+  const h = 95;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+
+  const pad = { top: 5, right: 4, bottom: 12, left: 22 };
+  const plotW = w - pad.left - pad.right;
+  const plotH = h - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = '#141e2a';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (plotH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + plotW, y);
+    ctx.stroke();
+  }
+
+  // Y labels
+  ctx.fillStyle = '#3a4a5a';
+  ctx.font = '8px IBM Plex Mono, monospace';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    ctx.fillText(100 - i * 25, pad.left - 3, pad.top + (plotH / 4) * i + 3);
+  }
+
+  // Lines
+  datasets.forEach(ds => {
+    if (ds.data.length < 2) return;
+    ctx.strokeStyle = ds.color;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let i = 0; i < ds.data.length; i++) {
+      const x = pad.left + (i / Math.max(1, ds.data.length - 1)) * plotW;
+      const y = pad.top + plotH - (clamp(ds.data[i], 0, 100) / 100) * plotH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  });
+
+  // Legend
+  ctx.font = '8px IBM Plex Mono, monospace';
+  ctx.textAlign = 'left';
+  let lx = pad.left + 2;
+  datasets.forEach(ds => {
+    ctx.fillStyle = ds.color;
+    ctx.fillRect(lx, pad.top, 6, 2);
+    ctx.fillText(ds.label, lx + 9, pad.top + 3);
+    lx += ctx.measureText(ds.label).width + 18;
+  });
+}
+
+function updateCharts() {
+  drawChart('chart-traffic', [
+    { data: history.traffic, color: '#33cc66', label: 'Traffic' }
+  ]);
+  drawChart('chart-cap-conf', [
+    { data: history.threat, color: '#cc4444', label: 'Capability' },
+    { data: history.confidence, color: '#ccaa33', label: 'Confidence' }
+  ]);
+}
+
+
+// ============================================================
+// UTILITY
+// ============================================================
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function scurve(x, k, m) { return 100 / (1 + Math.exp(-k * (x - m))); }
+function chance(p) { return Math.random() < p; }
+
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+function loadConfig(key) {
+  cfg = Object.assign({}, CONFIG);
+  const s = SCENARIOS[key];
+  if (s && s.overrides) Object.assign(cfg, s.overrides);
+}
+
+function initState() {
+  state = {
+    day: 0,
+    threatPressure: cfg.initialThreatPressure,
+    mineThreat: cfg.initialMineThreat,
+    baseOperability: cfg.initialBaseOperability,
+    escortCredibility: cfg.initialEscortCredibility,
+    coverAvailability: cfg.initialCoverAvailability,
+    premiumBurden: cfg.initialPremiumBurden,
+    operationalWillingness: cfg.initialOperationalWillingness,
+    merchantConfidence: cfg.initialConfidence,
+    trafficFlow: cfg.initialTraffic,
+    suppressionEffect: 0,
+    reconstitution: cfg.iranReconBaseRate,
+    attackOccurred: false,
+    iranAlloc: {
+      drone: cfg.iranDroneWeight,
+      missile: cfg.iranMissileWeight,
+      mine: cfg.iranMineWeight,
+      recon: cfg.iranReconWeight,
+      baseAttack: cfg.iranBaseAttackWeight,
+    }
+  };
+  history = {
+    traffic: [state.trafficFlow],
+    confidence: [state.merchantConfidence],
+    threat: [state.threatPressure],
+    suppression: [0],
+    mineThreat: [state.mineThreat],
+    baseOp: [state.baseOperability],
+  };
+  gameOver = false;
+  winStreak = 0;
+  lowTrafficDays = 0;
+  attackMarker = null;
+
+  generateMinePositions(60);
+  generateusPositions();
+  generateThreatZones();
+  generateShips(30);
+}
+
+
+// ============================================================
+// IRANIAN AI
+// ============================================================
+
+function updateIranianAI(pa) {
+  const adapt = cfg.iranAdaptiveness;
+  const a = state.iranAlloc;
+  const budget = cfg.playerBudget;
+  const sr = pa.strike / budget, mr = pa.mcm / budget, br = pa.base / budget;
+
+  a.recon = cfg.iranReconWeight + adapt * sr * 0.4;
+  a.mine = cfg.iranMineWeight + adapt * (1 - mr) * 0.3;
+  a.baseAttack = cfg.iranBaseAttackWeight + adapt * (1 - br) * 0.3;
+
+  const assigned = a.recon + a.mine + a.baseAttack;
+  const rem = Math.max(0, 1 - assigned);
+  a.drone = rem * 0.55;
+  a.missile = rem * 0.45;
+
+  const total = a.drone + a.missile + a.mine + a.recon + a.baseAttack;
+  Object.keys(a).forEach(k => a[k] /= total);
+}
+
+
+// ============================================================
+// SIMULATION STEP
+// ============================================================
+
+function simulateDay(pa) {
+  const s = state;
+  const events = [];
+  s.day += 1;
+  s.attackOccurred = false;
+
+  // --- Iranian AI ---
+  updateIranianAI(pa);
+  const iran = s.iranAlloc;
+  const ib = cfg.iranBudget;
+
+  // Iranian strategy shift events — show the adversary adapting
+  if (s.day % 7 === 0 && s.day > 0) {
+    // Identify dominant Iranian strategy and explain it
+    const maxAlloc = Math.max(iran.drone, iran.missile, iran.mine, iran.recon, iran.baseAttack);
+    if (maxAlloc === iran.mine) {
+      events.push({text: "IRGC shifting to mine warfare — cheap, persistent, and it doesn't matter how many planes you have", type: 'warn'});
+    } else if (maxAlloc === iran.recon) {
+      events.push({text: "Iran prioritizing reconstitution — rebuilding from hardened tunnels and dispersed civilian sites faster than strikes can degrade", type: 'warn'});
+    } else if (maxAlloc === iran.baseAttack) {
+      events.push({text: "Iranian missiles targeting U.S. forward bases — if they degrade your sortie rate, your whole campaign slows", type: 'warn'});
+    } else if (maxAlloc === iran.drone) {
+      const droneMsgs = [
+        "IRGC launching Shahed drones from mobile platforms — trucks, small boats, civilian areas",
+        "Drone swarms from dispersed launch points — each one costs $20K, each interceptor costs $2M",
+        "Low-altitude drone penetration — even one hit on a tanker shuts down shipping for days",
+      ];
+      events.push({text: droneMsgs[Math.floor(Math.random() * droneMsgs.length)], type: 'warn'});
+    } else if (maxAlloc === iran.missile) {
+      events.push({text: "Iranian ballistic missiles targeting ships at range — anti-ship capability doesn't require air superiority", type: 'warn'});
+    }
+  }
+
+  // Reconstitution — Iran rebuilds from dispersed, hidden sites
+  const reconEffort = iran.recon * ib;
+  s.reconstitution = cfg.iranReconBaseRate + reconEffort * 0.08;
+  s.threatPressure += s.reconstitution;
+
+  // Reconstitution events
+  if (s.reconstitution > s.suppressionEffect && s.day > 3 && s.day % 4 === 0) {
+    events.push({text: "Iran reconstituting faster than U.S. can suppress — threat level rising", type: 'attack'});
+  }
+  if (s.reconstitution > 5 && s.day % 6 === 0) {
+    const reconMsgs = [
+      "Drone launches detected from new dispersed sites across Iranian coast",
+      "Satellite imagery shows rebuilt missile assembly at previously struck facility",
+      "IRGC moving mobile launchers to new concealed positions",
+      "Intelligence: Iran activating backup drone production in hardened tunnels",
+      "Multiple drone launch points active simultaneously — too dispersed to suppress",
+    ];
+    events.push({text: reconMsgs[Math.floor(Math.random() * reconMsgs.length)], type: 'attack'});
+  }
+  if (s.suppressionEffect > s.reconstitution && s.day % 5 === 0 && s.day > 5) {
+    events.push({text: "U.S. degrading Iranian capability faster than reconstitution — progress", type: 'good'});
+  }
+
+  // Mine persistence
+  const mineEffort = iran.mine * ib;
+  s.mineThreat += mineEffort * 0.06;
+  if (mineEffort > 15) events.push({text: "Iranian mine-laying detected in transit lanes", type: 'attack'});
+
+  // Base attacks — Iranian counterforce strikes on U.S. bases
+  const baseAttackEffort = iran.baseAttack * ib;
+  if (chance(baseAttackEffort * 0.012)) {
+    const dmg = 5 + Math.random() * 10;
+    s.baseOperability -= dmg;
+    events.push({text: "Iranian strike hits 5th Fleet forward base", type: 'attack'});
+    if (s.baseOperability < 60 && s.baseOperability > 45) {
+      events.push({text: "Base damage reducing sortie rate — fewer strikes means slower threat degradation", type: 'warn'});
+    }
+  }
+
+  // --- U.S. ---
+  const opMod = s.baseOperability / 100;
+
+  // ---- STRIKE (nonlinear diminishing returns) ----
+  // Easy targets go first. As threat drops below ~30%, remaining capabilities
+  // are dispersed, mobile, hardened, or in tunnels. The last 15-20% is
+  // extremely difficult to degrade (Talmadge).
+  // Diminishing returns curve: effectiveness falls as threat gets lower.
+  const threatFraction = s.threatPressure / 100;
+  const diminishingFactor = 0.3 + 0.7 * Math.pow(threatFraction, 0.5);
+  // At threat=100: factor=1.0 (full effectiveness)
+  // At threat=50:  factor=0.79
+  // At threat=25:  factor=0.65
+  // At threat=10:  factor=0.52
+  // At threat=5:   factor=0.46 — very hard to push lower
+  const strikeEff = pa.strike * cfg.strikeEffectiveness * opMod * diminishingFactor;
+  s.threatPressure -= strikeEff;
+  s.suppressionEffect = strikeEff;
+
+  if (pa.strike > 60 && strikeEff > 3) {
+    events.push({text: "U.S. strikes degrade Iranian positions", type: 'good'});
+  }
+  if (pa.strike > 60 && s.threatPressure < 25 && s.threatPressure > 15 && s.day % 3 === 0) {
+    events.push({text: "Remaining targets dispersed and mobile — harder to find and hit", type: 'warn'});
+  }
+
+  // ---- MCM (depends on threat environment — Talmadge) ----
+  // Mine clearing vessels are slow and exposed. Under active missile/drone
+  // threat, they cannot operate safely. MCM effectiveness is severely
+  // degraded when threat pressure is high.
+  // Also: mine clearing has its own diminishing returns — the last mines
+  // are hardest to find (bottom mines, drifted mines, false contacts).
+  const mcmThreatPenalty = Math.pow(1 - clamp(s.threatPressure / 100, 0, 0.9), 1.5);
+  // At threat=80: penalty=0.09 (nearly impossible to sweep)
+  // At threat=50: penalty=0.35
+  // At threat=25: penalty=0.65
+  // At threat=10: penalty=0.86 (reasonably safe)
+  const mineDiminishing = 0.4 + 0.6 * Math.pow(s.mineThreat / 100, 0.6);
+  const mcmEff = pa.mcm * cfg.mcmEffectiveness * mcmThreatPenalty * mineDiminishing;
+  s.mineThreat -= mcmEff;
+
+  if (pa.mcm > 50 && s.threatPressure > 50) {
+    events.push({text: "MCM vessels exposed to missile fire — sweeping operations severely limited", type: 'warn'});
+  } else if (pa.mcm > 50 && s.threatPressure > 25) {
+    events.push({text: "Mine clearing proceeding under partial threat — slow and dangerous", type: 'warn'});
+  } else if (pa.mcm > 50 && mcmEff > 1 && s.mineThreat > 15) {
+    events.push({text: "Mine-clearing progress on shipping lanes", type: 'good'});
+  }
+  if (s.mineThreat < 20 && s.mineThreat > 10 && pa.mcm > 40 && s.day % 4 === 0) {
+    events.push({text: "Residual mine contacts — each one takes hours to classify and neutralize", type: 'neutral'});
+  }
+
+  // Base defense + recovery
+  s.baseOperability += pa.base * cfg.baseDefenseEffect * 0.1 + cfg.baseOperabilityRecovery;
+
+  // --- Attack resolution ---
+  const attackProb = cfg.attackBaseChance * s.threatPressure * (1 - pa.reserve * cfg.reserveInterceptChance);
+  if (chance(clamp(attackProb, 0, 0.85))) {
+    s.attackOccurred = true;
+    // Place attack marker on the map (fixed position, fades out)
+    const atkX = 0.35 + Math.random() * 0.35;
+    attackMarker = { x: atkX, y: lerpLane(SHIPPING_LANE, atkX), alpha: 1.0 };
+    s.escortCredibility -= cfg.escortDecayOnAttack;
+    s.coverAvailability -= cfg.coverAttackPenalty;
+    s.operationalWillingness -= cfg.willingnessAttackPenalty;
+    s.mineThreat += cfg.attackMineThreatBoost * 0.3;
+    s.merchantConfidence -= cfg.attackDamageToConfidence;
+
+    const types = [
+      "Drone strike damages merchant vessel in transit",
+      "Anti-ship missile targets container ship",
+      "Fast-boat harassment forces convoy to scatter",
+      "Limpet mine suspected on tanker hull",
+    ];
+    const attackType = types[Math.floor(Math.random() * types.length)];
+    events.push({text: attackType, type: 'attack'});
+
+    // Asymmetric cost messaging — shows why this fight favors Iran
+    const costMsgs = [
+      "One $20K drone just shut down $50M in daily shipping revenue",
+      "Iran doesn't need to sink ships — one hit collapses insurance cover for weeks",
+      "War-risk premiums spike 300% — charterers reroute around the Cape, adding 10 days per voyage",
+      "A single attack undoes weeks of escort credibility — shippers remember the hit, not the safe days",
+      "The interceptor missile cost more than the drone it shot down — and it still got through",
+      "Crew unions threaten to refuse Hormuz transit — no crew, no ships, no cargo",
+    ];
+    events.push({text: costMsgs[Math.floor(Math.random() * costMsgs.length)], type: 'warn'});
+    if (s.trafficFlow > 30) events.push({text: "Insurers narrow cover", type: 'warn'});
+  }
+
+  // --- Escort credibility ---
+  if (!s.attackOccurred && pa.escort > 30) {
+    s.escortCredibility += pa.escort * cfg.escortBuildRate * 0.1;
+    if (s.escortCredibility > 40 && s.escortCredibility < 45) {
+      events.push({text: "Escort presence noted, but insufficient for broad confidence", type: 'neutral'});
+    }
+    if (s.escortCredibility > 65 && s.escortCredibility < 70) {
+      events.push({text: "Repeated safe escort transits building operator confidence", type: 'good'});
+    }
+  }
+  s.escortCredibility -= 0.5;
+
+  // --- Cover (Talmadge: requires BOTH low threat AND low mines) ---
+  // Insurance is multiplicative: both dimensions must be safe.
+  // Even a few mines with zero missile threat still blocks cover.
+  const threatSafe = Math.pow(clamp(1 - s.threatPressure / 100, 0, 1), 0.8);
+  const mineSafe = Math.pow(clamp(1 - s.mineThreat / 100, 0, 1), 1.2); // mines weighted heavier
+  const coverTarget = 100 * threatSafe * mineSafe;
+  s.coverAvailability += (coverTarget - s.coverAvailability) * cfg.coverRecoveryRate * 0.05;
+
+  // --- Premium (driven by WORST of threat or mines, not average) ---
+  const worstRisk = Math.max(s.threatPressure, s.mineThreat);
+  const premTarget = cfg.premiumBaseline + worstRisk * 0.7 +
+    Math.min(s.threatPressure, s.mineThreat) * 0.2;
+  s.premiumBurden += (premTarget - s.premiumBurden) * cfg.premiumDecayRate;
+
+  // --- Willingness (multiplicative — crew needs ALL conditions tolerable) ---
+  if (!s.attackOccurred) {
+    // Willingness is the product of separate tolerability factors
+    const mineTolerability = clamp(1 - s.mineThreat / 80, 0, 1); // above 80 → zero
+    const threatTolerability = clamp(1 - s.threatPressure / 90, 0, 1);
+    const escortFactor = 0.3 + 0.7 * (s.escortCredibility / 100); // escorts help but aren't enough alone
+    const willTarget = 100 * mineTolerability * threatTolerability * escortFactor;
+    s.operationalWillingness += (Math.max(0, willTarget) - s.operationalWillingness) * cfg.willingnessRecoveryRate;
+  }
+
+  // --- Clamp ---
+  s.threatPressure = clamp(s.threatPressure, 0, 100);
+  s.mineThreat = clamp(s.mineThreat, 0, 100);
+  s.baseOperability = clamp(s.baseOperability, 10, 100);
+  s.escortCredibility = clamp(s.escortCredibility, 0, 100);
+  s.coverAvailability = clamp(s.coverAvailability, 0, 100);
+  s.premiumBurden = clamp(s.premiumBurden, cfg.premiumBaseline, 100);
+  s.operationalWillingness = clamp(s.operationalWillingness, 0, 100);
+
+  // --- Merchant Confidence (Talmadge-informed) ---
+  // Confidence is NOT a weighted average. It is constrained by the WORST
+  // blocking factor. Any single dealbreaker can keep confidence near zero.
+  // Think of it as a chain: the weakest link determines the whole.
+  //
+  // Mine psychology: even 10-15% mine threat is enough to shut shipping.
+  // The disproportionate effect of mines on confidence is the key insight.
+  const mineConfFactor = s.mineThreat > 50 ? 0 :
+    s.mineThreat > 25 ? 0.15 :
+    s.mineThreat > 10 ? 0.5 :
+    s.mineThreat > 3 ? 0.8 : 1.0;
+
+  const threatConfFactor = clamp(1 - s.threatPressure / 80, 0, 1);
+  const coverFactor = clamp(s.coverAvailability / 60, 0, 1); // need at least 60% cover
+  const premiumFactor = clamp(1 - (s.premiumBurden - 30) / 60, 0, 1);
+  const willingFactor = clamp(s.operationalWillingness / 50, 0, 1);
+  const escortFactor = 0.5 + 0.5 * (s.escortCredibility / 100);
+
+  // Multiplicative: every factor must be reasonable for confidence to build
+  const confProduct = mineConfFactor * threatConfFactor * coverFactor *
+    premiumFactor * willingFactor * escortFactor;
+
+  // Apply S-curve to the product for nonlinearity
+  const rawConf = confProduct * 100;
+  const target = scurve(rawConf, cfg.confSteepness, cfg.confMidpoint);
+
+  // Asymmetric movement: slow to build, fast to collapse
+  if (target > s.merchantConfidence) {
+    s.merchantConfidence += (target - s.merchantConfidence) * 0.06; // very slow recovery
+  } else {
+    s.merchantConfidence += (target - s.merchantConfidence) * 0.35; // fast collapse
+  }
+  s.merchantConfidence = clamp(s.merchantConfidence, 0, 100);
+
+  // --- Traffic ---
+  let trafficTarget;
+  if (s.merchantConfidence < cfg.trafficCollapseThreshold) {
+    trafficTarget = cfg.trafficMinResidual + (s.merchantConfidence / cfg.trafficCollapseThreshold) * 15;
+  } else {
+    trafficTarget = cfg.trafficMinResidual + s.merchantConfidence * 0.95;
+  }
+  trafficTarget = clamp(trafficTarget, cfg.trafficMinResidual, 100);
+
+  if (trafficTarget > s.trafficFlow) {
+    s.trafficFlow += (trafficTarget - s.trafficFlow) * cfg.trafficRecoveryRate;
+  } else {
+    s.trafficFlow += (trafficTarget - s.trafficFlow) * cfg.trafficCollapseRate;
+  }
+  s.trafficFlow += (Math.random() - 0.5) * cfg.trafficNoiseRange;
+  s.trafficFlow = clamp(s.trafficFlow, cfg.trafficMinResidual, 100);
+
+  if (s.coverAvailability > 60 && s.coverAvailability < 65) events.push({text: "Insurers cautiously resume strait cover", type: 'good'});
+  if (s.premiumBurden > 80 && s.day % 5 === 0) events.push({text: "War-risk premiums deter most operators", type: 'warn'});
+  if (s.baseOperability < 50) events.push({text: "5th Fleet base damage limits sortie rate", type: 'warn'});
+
+  // --- History ---
+  history.traffic.push(s.trafficFlow);
+  history.confidence.push(s.merchantConfidence);
+  history.threat.push(s.threatPressure);
+  history.suppression.push(s.suppressionEffect);
+  history.mineThreat.push(s.mineThreat);
+  history.baseOp.push(s.baseOperability);
+
+  // --- Economic damage tracking ---
+  if (s.trafficFlow >= cfg.winTrafficThreshold) winStreak++; else winStreak = 0;
+  if (s.trafficFlow < cfg.loseRecessionFloor) lowTrafficDays++;
+
+  // Economic milestone events
+  if (lowTrafficDays === 14) {
+    events.push({text: "Two weeks of closure — oil past $130/bbl. Strategic petroleum reserves being tapped.", type: 'warn'});
+  }
+  if (lowTrafficDays === 21) {
+    events.push({text: "Three weeks — fertilizer shipments blocked. Spring planting season at risk.", type: 'warn'});
+  }
+  if (lowTrafficDays === 25) {
+    events.push({text: "Economists warn: recession now likely if strait remains closed past 30 days.", type: 'attack'});
+  }
+  if (lowTrafficDays === cfg.loseRecessionDays) {
+    events.push({text: "30 days of closure. Oil at $150+/bbl. Goldman Sachs declares global recession underway.", type: 'attack'});
+  }
+  if (lowTrafficDays === 45) {
+    events.push({text: "Major carriers permanently rerouting around Cape of Good Hope. Supply chains adapting to new normal.", type: 'attack'});
+  }
+
+  // --- Win/Lose ---
+  let outcome = null;
+  if (winStreak >= cfg.winConsecutiveDays) {
+    outcome = { type: 'win', title: 'Strait Reopened',
+      text: `Traffic sustained above ${cfg.winTrafficThreshold}% for ${cfg.winConsecutiveDays} days. The strait is functionally reopened — but this required weeks of sustained confidence-building across insurance, crew willingness, and demonstrated safe passage, far slower than the military campaign itself.` };
+  } else if (lowTrafficDays >= cfg.loseStructuralDays) {
+    outcome = { type: 'lose', title: 'Global Recession',
+      text: `The strait has been effectively closed for ${lowTrafficDays} days. Oil has sustained above $150/bbl for over a month. The global economy is in recession — GDP contracting 2-3%, fertilizer shortages threatening food supply chains, and major shipping lines have permanently rerouted around the Cape of Good Hope. Even if the strait reopens tomorrow, the economic damage is done. Military superiority did not translate into commercial reopening fast enough.` };
+  } else if (lowTrafficDays >= cfg.loseRecessionDays && s.day >= cfg.maxDays) {
+    outcome = { type: 'lose', title: 'Structural Damage',
+      text: `After ${cfg.maxDays} days, traffic at only ${Math.round(s.trafficFlow)}%. With ${lowTrafficDays} days below ${cfg.loseRecessionFloor}%, the global economy has entered recession. Supply chains are permanently restructuring around the Cape. The fertilizer shock will cut the next harvest. Your military campaign degraded Iranian capabilities — but the strait remained commercially closed long enough to break the global economy.` };
+  } else if (s.day >= cfg.maxDays) {
+    if (s.trafficFlow >= 50) {
+      outcome = { type: 'partial', title: 'Partial Recovery',
+        text: `After ${cfg.maxDays} days, traffic at ${Math.round(s.trafficFlow)}%. The strait is partially reopened, but sustained damage — oil at elevated prices for weeks, disrupted fertilizer supply, rerouted shipping — means economic recovery will take 12-18 months. Military success was necessary but came too slowly to prevent serious harm.` };
+    } else {
+      outcome = { type: 'lose', title: 'Failure to Reopen',
+        text: `After ${cfg.maxDays} days, traffic at only ${Math.round(s.trafficFlow)}%. Mines, uncertainty, and collapsed confidence kept the strait commercially closed despite military superiority. The economic consequences — recession, food supply disruption, permanent rerouting — will persist for years.` };
+    }
+  }
+
+  return { events, outcome };
+}
+
+
+// ============================================================
+// UI UPDATE
+// ============================================================
+
+function getPlayerAlloc() {
+  return {
+    strike: +document.getElementById('slider-strike').value,
+    mcm: +document.getElementById('slider-mcm').value,
+    escort: +document.getElementById('slider-escort').value,
+    base: +document.getElementById('slider-base').value,
+    reserve: +document.getElementById('slider-reserve').value,
+  };
+}
+
+function updateBudgetDisplay() {
+  const a = getPlayerAlloc();
+  const rem = cfg.playerBudget - (a.strike + a.mcm + a.escort + a.base + a.reserve);
+  const el = document.getElementById('budget-remaining');
+  el.textContent = rem;
+  el.style.color = rem < 0 ? 'var(--red)' : rem === 0 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('val-strike').textContent = a.strike;
+  document.getElementById('val-mcm').textContent = a.mcm;
+  document.getElementById('val-escort').textContent = a.escort;
+  document.getElementById('val-base').textContent = a.base;
+  document.getElementById('val-reserve').textContent = a.reserve;
+  document.getElementById('advance-btn').disabled = rem < 0;
+  document.getElementById('advance5-btn').disabled = rem < 0;
+}
+
+function updateMeters() {
+  const s = state;
+  const set = (id, val, c, suffix) => {
+    document.getElementById(`meter-${id}`).style.width = `${clamp(val,0,100)}%`;
+    document.getElementById(`meter-${id}-val`).textContent = suffix || `${Math.round(val)}%`;
+    if (c) document.getElementById(`meter-${id}`).style.background = c;
+  };
+  let tc = 'var(--green)';
+  if (s.trafficFlow < 30) tc = 'var(--red)';
+  else if (s.trafficFlow < 60) tc = 'var(--amber)';
+  set('traffic', s.trafficFlow, tc);
+  set('confidence', s.merchantConfidence, 'var(--amber)');
+  // Mine danger
+  let mc = 'var(--red)';
+  if (s.mineThreat < 15) mc = 'var(--green)';
+  else if (s.mineThreat < 35) mc = 'var(--amber)';
+  set('mines', s.mineThreat, mc);
+  // Iranian capabilities (threatPressure)
+  let capC = 'var(--red)';
+  if (s.threatPressure < 20) capC = 'var(--green)';
+  else if (s.threatPressure < 50) capC = 'var(--amber)';
+  set('capability', s.threatPressure, capC);
+}
+
+// ============================================================
+// SHIPPER OUTLOOK — Plain English explanation of commercial state
+// ============================================================
+
+function updateShipperOutlook() {
+  const s = state;
+  const items = [];
+
+  // --- Mines ---
+  if (s.mineThreat > 70) {
+    items.push({ icon: 'red', speaker: 'Shipowners',
+      text: 'No one will risk a hull in unsurveyed lanes. Until mines are cleared, the strait is closed.' });
+  } else if (s.mineThreat > 40) {
+    items.push({ icon: 'red', speaker: 'Shipowners',
+      text: 'Suspected mines still in shipping lanes. Most operators won\'t transit without full route survey.' });
+  } else if (s.mineThreat > 15) {
+    items.push({ icon: 'amber', speaker: 'Shipowners',
+      text: 'Mine threat declining, but residual risk keeps cautious operators out.' });
+  } else {
+    items.push({ icon: 'green', speaker: 'Shipowners',
+      text: 'Shipping lanes assessed as largely clear. Mine risk manageable.' });
+  }
+
+  // --- Insurance ---
+  if (s.coverAvailability < 15) {
+    items.push({ icon: 'red', speaker: 'Lloyd\'s / Insurers',
+      text: 'War-risk cover withdrawn for strait transit. Ships cannot legally sail without it.' });
+  } else if (s.coverAvailability < 40) {
+    items.push({ icon: 'red', speaker: 'Lloyd\'s / Insurers',
+      text: 'Only a few specialty insurers offering cover — at prohibitive rates. Most ships can\'t get a policy.' });
+  } else if (s.coverAvailability < 70) {
+    items.push({ icon: 'amber', speaker: 'Insurers',
+      text: 'Cover becoming available from some underwriters, but terms are restrictive and premiums high.' });
+  } else {
+    items.push({ icon: 'green', speaker: 'Insurers',
+      text: 'War-risk cover broadly available. Premiums still elevated but not prohibitive.' });
+  }
+
+  // --- Premiums ---
+  if (s.premiumBurden > 80) {
+    items.push({ icon: 'red', speaker: 'Charterers',
+      text: 'Premiums make strait transit uneconomical. Cheaper to reroute around the Cape.' });
+  } else if (s.premiumBurden > 50) {
+    items.push({ icon: 'amber', speaker: 'Charterers',
+      text: 'Premiums still painful. Only high-value or time-sensitive cargoes worth the cost.' });
+  } else if (s.premiumBurden > 30) {
+    items.push({ icon: 'amber', speaker: 'Charterers',
+      text: 'Premiums declining. More cargoes becoming economical for strait routing.' });
+  }
+
+  // --- Crew ---
+  if (s.operationalWillingness < 15) {
+    items.push({ icon: 'red', speaker: 'Crew & Masters',
+      text: 'Crews refusing strait passage. Seafarer unions backing them. No one wants to be the next headline.' });
+  } else if (s.operationalWillingness < 40) {
+    items.push({ icon: 'amber', speaker: 'Crew & Masters',
+      text: 'Some experienced crews willing if escorts provided and premiums compensate hazard pay.' });
+  } else if (s.operationalWillingness < 70) {
+    items.push({ icon: 'amber', speaker: 'Crew & Masters',
+      text: 'Willingness improving. Crews watching for incidents — one attack could reverse this.' });
+  } else {
+    items.push({ icon: 'green', speaker: 'Crew & Masters',
+      text: 'Most crews comfortable transiting with current security posture.' });
+  }
+
+  // --- Escort trust ---
+  if (s.escortCredibility < 20) {
+    items.push({ icon: 'red', speaker: 'Ship Operators',
+      text: 'Navy says they\'ll escort. Operators want proof — weeks of safe transits, not press releases.' });
+  } else if (s.escortCredibility < 50) {
+    items.push({ icon: 'amber', speaker: 'Ship Operators',
+      text: 'Escort track record building. Some operators testing the route. Most still waiting.' });
+  } else if (s.escortCredibility < 75) {
+    items.push({ icon: 'amber', speaker: 'Ship Operators',
+      text: 'Growing confidence in Navy escorts. More operators booking strait transits.' });
+  } else {
+    items.push({ icon: 'green', speaker: 'Ship Operators',
+      text: 'Escort credibility high. Operators broadly trust the Navy can protect transits.' });
+  }
+
+  // --- Iranian reconstitution / drone threat (the Policy Tensor insight) ---
+  if (s.reconstitution > 5 && s.threatPressure > 40) {
+    items.push({ icon: 'red', speaker: 'Analysts',
+      text: 'Iran rebuilding strike capability faster than U.S. can degrade it. Drones launching from dispersed, hidden sites.' });
+  } else if (s.reconstitution > 3 && s.threatPressure > 25) {
+    items.push({ icon: 'amber', speaker: 'Analysts',
+      text: 'Iranian capabilities still reconstituting. Threat not declining fast enough to restore confidence.' });
+  }
+
+  // --- MCM under fire (Talmadge) ---
+  if (s.mineThreat > 30 && s.threatPressure > 40) {
+    items.push({ icon: 'red', speaker: '5th Fleet MCM',
+      text: 'Can\'t safely sweep mines while under missile threat. Must suppress Iranian fire before MCM can operate effectively.' });
+  } else if (s.mineThreat > 20 && s.threatPressure > 20) {
+    items.push({ icon: 'amber', speaker: '5th Fleet MCM',
+      text: 'Mine clearing proceeding at reduced pace — threat environment still constrains operations.' });
+  }
+
+  // --- Base readiness feedback loop ---
+  if (s.baseOperability < 50) {
+    items.push({ icon: 'red', speaker: '5th Fleet',
+      text: 'Base damage degrading sortie rate. Fewer sorties means slower threat suppression — a vicious cycle.' });
+  }
+
+  // --- "Last 15-20%" problem (Talmadge) ---
+  if (s.threatPressure > 10 && s.threatPressure < 25 && s.reconstitution > 2) {
+    items.push({ icon: 'amber', speaker: 'Analysts',
+      text: 'Remaining Iranian capabilities are dispersed, mobile, and hardened. Degradation slowing — each additional strike yields less.' });
+  }
+
+  // --- Overall summary ---
+  if (s.trafficFlow < 10) {
+    items.push({ icon: 'red', speaker: 'Summary',
+      text: 'The strait is effectively closed. Only the most desperate traffic moves.' });
+  } else if (s.trafficFlow > 60 && s.merchantConfidence > 55) {
+    items.push({ icon: 'green', speaker: 'Summary',
+      text: 'Commercial traffic recovering. Confidence fragile — one incident could reverse progress.' });
+  } else if (s.threatPressure < 15 && s.mineThreat > 20) {
+    items.push({ icon: 'amber', speaker: 'Summary',
+      text: 'Iranian fire largely suppressed, but mines still blocking commerce. Military victory ≠ open strait.' });
+  } else if (s.threatPressure < 15 && s.mineThreat < 15 && s.merchantConfidence < 40) {
+    items.push({ icon: 'amber', speaker: 'Summary',
+      text: 'Threat and mines both down, but shippers still won\'t cross. Confidence lags weeks behind military success.' });
+  }
+
+  // Render
+  const container = document.getElementById('shipper-outlook');
+  container.innerHTML = items.map(it =>
+    `<div class="outlook-item">
+      <div class="outlook-icon ${it.icon}"></div>
+      <div><span class="outlook-speaker">${it.speaker}:</span> <span class="outlook-text">${it.text}</span></div>
+    </div>`
+  ).join('');
+}
+
+function updateDayDisplay() {
+  document.getElementById('day-label').textContent = state.day === 0 ? 'Day 0' : `Day ${state.day}`;
+  const el = document.getElementById('status-label');
+  if (gameOver) { el.textContent = 'ENDED'; el.style.color = 'var(--text-dim)'; }
+  else if (state.trafficFlow >= cfg.winTrafficThreshold) { el.textContent = `RECOVERY ${winStreak}/${cfg.winConsecutiveDays}`; el.style.color = 'var(--green)'; }
+  else if (state.attackOccurred) { el.textContent = 'ATTACK'; el.style.color = 'var(--red)'; }
+  else if (state.trafficFlow > 40) { el.textContent = 'PARTIAL'; el.style.color = 'var(--amber)'; }
+  else { el.textContent = 'DISRUPTED'; el.style.color = 'var(--amber)'; }
+}
+
+// Events can be strings or { text, type } objects.
+// Types: 'attack' (red), 'good' (green), 'warn' (amber), 'neutral' (dim)
+function addLogEntries(events) {
+  const log = document.getElementById('event-log');
+  events.forEach(e => {
+    const text = typeof e === 'string' ? e : e.text;
+    const type = typeof e === 'string' ? 'neutral' : e.type;
+    const d = document.createElement('div');
+    d.className = `log-entry log-${type}`;
+    d.innerHTML = `<span class="log-day">D${state.day}</span><span>${text}</span>`;
+    log.prepend(d);
+  });
+}
+
+function showOutcome(o) {
+  document.getElementById('outcome-title').textContent = o.title;
+  document.getElementById('outcome-title').style.color =
+    o.type === 'win' ? 'var(--green)' : o.type === 'partial' ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('outcome-text').textContent = o.text;
+  document.getElementById('outcome-overlay').classList.add('active');
+}
+
+
+// ============================================================
+// GAME FLOW
+// ============================================================
+
+function advanceDay() {
+  if (gameOver) return;
+  const a = getPlayerAlloc();
+  if (a.strike + a.mcm + a.escort + a.base + a.reserve > cfg.playerBudget) return;
+
+  const result = simulateDay(a);
+  updateMeters();
+  updateShipperOutlook();
+  updateDayDisplay();
+  updateCharts();
+  drawMap();
+  addLogEntries(result.events);
+
+  if (result.outcome) {
+    gameOver = true;
+    showOutcome(result.outcome);
+    updateDayDisplay();
+  }
+}
+
+function resetGame() {
+  loadConfig(document.getElementById('scenario-select').value);
+  initState();
+  document.getElementById('event-log').innerHTML = '';
+  document.getElementById('outcome-overlay').classList.remove('active');
+  updateMeters();
+  updateShipperOutlook();
+  updateDayDisplay();
+  updateCharts();
+  drawMap();
+  updateBudgetDisplay();
+  const scenarioLabel = SCENARIOS[document.getElementById('scenario-select').value].label;
+  addLogEntries([
+    `Scenario: ${scenarioLabel}`,
+    'IRGC Navy mines confirmed in shipping lanes',
+    'Lloyd\'s suspends war-risk cover for strait transit',
+    'Strait traffic down 97% — 20M bbl/day blocked',
+    'Oil past $110/bbl, rising',
+    'U.S. air superiority established over Gulf theater',
+    'Joint U.S.–Israeli strikes destroy Iranian air defenses',
+  ]);
+}
+
+
+// ============================================================
+// ANIMATION LOOP — keeps map ships moving
+// ============================================================
+
+let animating = false;
+function animateMap() {
+  if (!gameOver) drawMap();
+  requestAnimationFrame(animateMap);
+}
+
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+
+['strike','mcm','escort','base','reserve'].forEach(id => {
+  document.getElementById(`slider-${id}`).addEventListener('input', updateBudgetDisplay);
+});
+
+document.getElementById('advance-btn').addEventListener('click', advanceDay);
+document.getElementById('advance5-btn').addEventListener('click', function() {
+  for (let i = 0; i < 5; i++) {
+    if (gameOver) break;
+    advanceDay();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') &&
+      !['INPUT','SELECT','BUTTON'].includes(e.target.tagName)) {
+    e.preventDefault();
+    advanceDay();
+  }
+});
+
+document.getElementById('reset-btn').addEventListener('click', resetGame);
+document.getElementById('scenario-select').addEventListener('change', resetGame);
+
+document.getElementById('info-toggle').addEventListener('click', () => {
+  document.getElementById('info-content').classList.toggle('open');
+  const t = document.getElementById('info-toggle');
+  t.innerHTML = document.getElementById('info-content').classList.contains('open')
+    ? '&#9652; About this model' : '&#9662; About this model';
+});
+
+window.addEventListener('resize', () => { updateCharts(); drawMap(); });
+
+// --- Tooltip system (fixed-position, appended to body, escapes stacking contexts) ---
+const tooltipEl = document.getElementById('tooltip');
+document.addEventListener('mouseover', e => {
+  const target = e.target.closest('[data-tooltip]');
+  if (!target) return;
+  tooltipEl.textContent = target.getAttribute('data-tooltip');
+  tooltipEl.classList.add('visible');
+});
+
+document.addEventListener('mousemove', e => {
+  if (!tooltipEl.classList.contains('visible')) return;
+  const pad = 12;
+  const tw = 230;
+  const th = tooltipEl.offsetHeight;
+  // Default: below and to the right of cursor
+  let x = e.clientX + pad;
+  let y = e.clientY + pad;
+  // Clamp to viewport
+  if (x + tw > window.innerWidth) x = e.clientX - tw - pad;
+  if (y + th > window.innerHeight) y = e.clientY - th - pad;
+  if (x < 0) x = pad;
+  if (y < 0) y = pad;
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = y + 'px';
+});
+
+document.addEventListener('mouseout', e => {
+  const target = e.target.closest('[data-tooltip]');
+  if (!target) return;
+  // Only hide if we're actually leaving the tooltip-bearing element
+  if (!target.contains(e.relatedTarget)) {
+    tooltipEl.classList.remove('visible');
+  }
+});
+
+// Briefing overlay
+document.getElementById('briefing-start').addEventListener('click', () => {
+  document.getElementById('briefing-overlay').classList.add('hidden');
+});
+
+// Show briefing on reset too
+function showBriefing() {
+  document.getElementById('briefing-overlay').classList.remove('hidden');
+}
+
+
+// ============================================================
+// STARTUP
+// ============================================================
+
+resetGame();
+animateMap();
+</script>
+</body>
+</html>
