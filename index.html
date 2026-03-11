@@ -934,7 +934,10 @@ const CONFIG = {
   iranAdaptiveness: 0.3,
 
   // U.S. effectiveness (per-unit rates scaled for 200-point budget)
-  strikeEffectiveness: 0.275,
+  // At 40 alloc (equal): ~4.4/day vs reconstitution ~4-5/day — barely even.
+  // At 80 alloc (focused): ~8.8/day — clearly outpaces reconstitution.
+  // Player must front-load strike to make progress.
+  strikeEffectiveness: 0.22,
   mcmEffectiveness: 0.15,
   escortBuildRate: 0.075,
   escortDecayOnAttack: 20,
@@ -954,12 +957,16 @@ const CONFIG = {
   escortDamageReduction: 0.4,       // at full escort, attack damage reduced by 40%
 
   // Confidence model (multiplicative — S-curve on product of factors)
-  confSteepness: 0.08,
-  confMidpoint: 50,
+  // Midpoint 35: product must exceed ~35% before sigmoid lets meaningful
+  // confidence through. Equal-allocation rarely achieves this because
+  // too many factors stay mediocre. Focused sequencing can push the
+  // product above 50-60%, which the sigmoid amplifies.
+  confSteepness: 0.09,
+  confMidpoint: 35,
 
   // Traffic model (asymmetric)
   trafficCollapseThreshold: 35,
-  trafficRecoveryRate: 0.16,
+  trafficRecoveryRate: 0.22,
   trafficCollapseRate: 0.35,
   trafficMinResidual: 3,
   trafficNoiseRange: 2,
@@ -970,7 +977,7 @@ const CONFIG = {
 
   // Premium burden
   premiumBaseline: 20,
-  premiumDecayRate: 0.03,
+  premiumDecayRate: 0.045,
 
   // Operational willingness
   willingnessRecoveryRate: 0.06,
@@ -1877,8 +1884,10 @@ function simulateDay(pa) {
   // --- Escort credibility ---
   // Escorts have immediate operational value (attack probability + damage reduction above)
   // AND build long-term credibility through repeated safe transits.
-  if (!s.attackOccurred && pa.escort > 30) {
-    s.escortCredibility += pa.escort * cfg.escortBuildRate * 0.1;
+  // Credibility requires concentrated effort — 40 (equal alloc) barely breaks even.
+  // 60+ produces real growth. Decay is lower when escorts are active.
+  if (!s.attackOccurred && pa.escort > 20) {
+    s.escortCredibility += pa.escort * cfg.escortBuildRate * 0.12;
     if (s.escortCredibility > 40 && s.escortCredibility < 45) {
       events.push({text: "Escort presence noted, but insufficient for broad confidence", type: 'neutral'});
     }
@@ -1886,7 +1895,10 @@ function simulateDay(pa) {
       events.push({text: "Repeated safe escort transits building operator confidence", type: 'good'});
     }
   }
-  s.escortCredibility -= 0.5;
+  // Decay: 0.3 with active escorts, 0.7 without. At 40 alloc: growth=0.36, decay=0.3 → net +0.06 (barely).
+  // At 60 alloc: growth=0.54, decay=0.3 → net +0.24. At 80: growth=0.72 → net +0.42.
+  const escortDecay = pa.escort > 30 ? 0.3 : 0.7;
+  s.escortCredibility -= escortDecay;
 
   // --- Cover (Talmadge: requires BOTH low threat AND low mines) ---
   // Insurance is multiplicative: both dimensions must be safe.
@@ -1913,7 +1925,7 @@ function simulateDay(pa) {
   }
 
   // --- Clamp ---
-  s.threatPressure = clamp(s.threatPressure, 0, 100);
+  s.threatPressure = clamp(s.threatPressure, 2, 100); // irreducible residual — dispersed capability can never be fully eliminated
   s.mineThreat = clamp(s.mineThreat, 0, 100);
   s.baseOperability = clamp(s.baseOperability, 10, 100);
   s.escortCredibility = clamp(s.escortCredibility, 0, 100);
@@ -1931,7 +1943,8 @@ function simulateDay(pa) {
   const mineConfFactor = s.mineThreat > 50 ? 0 :
     s.mineThreat > 25 ? 0.15 :
     s.mineThreat > 10 ? 0.5 :
-    s.mineThreat > 3 ? 0.8 : 1.0;
+    s.mineThreat > 5 ? 0.75 :
+    s.mineThreat > 2 ? 0.9 : 1.0;
 
   const threatConfFactor = clamp(1 - s.threatPressure / 100, 0, 1);
   const coverFactor = clamp(s.coverAvailability / 60, 0, 1); // need at least 60% cover
