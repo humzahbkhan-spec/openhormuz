@@ -14,19 +14,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --bg:          #0a0e14;
-  --panel-bg:    #0f1520;
-  --panel-border:#1e2a3a;
-  --green:       #33cc66;
-  --green-dim:   #1a6633;
-  --amber:       #ccaa33;
-  --amber-dim:   #665518;
-  --red:         #cc4444;
-  --red-dim:     #662222;
-  --cyan:        #44aacc;
-  --text:        #c8ccd0;
-  --text-dim:    #6a7a8a;
-  --text-bright: #e8ecf0;
+  --bg:          #0c1018;
+  --panel-bg:    #111a28;
+  --panel-border:#263545;
+  --green:       #3de076;
+  --green-dim:   #1a7038;
+  --amber:       #e0b830;
+  --amber-dim:   #7a6420;
+  --red:         #e05050;
+  --red-dim:     #7a2a2a;
+  --cyan:        #50c0e0;
+  --text:        #dce0e6;
+  --text-dim:    #8090a4;
+  --text-bright: #f0f4f8;
   --heading:     #ddeeff;
   --sea:         #0b1a2e;
   --land:        #1a2a1a;
@@ -773,10 +773,11 @@ body {
     <div id="map-container">
       <canvas id="map-canvas"></canvas>
       <div class="map-overlay-stats">
+        <div class="map-stat"><span style="color:var(--red); font-size:10px; line-height:1;">&#9650;</span> Drone/missile launch</div>
         <div class="map-stat"><div class="map-stat-dot" style="background:var(--red)"></div> Mines</div>
-        <div class="map-stat"><div class="map-stat-dot" style="background:var(--amber)"></div> Threat zones</div>
         <div class="map-stat"><div class="map-stat-dot" style="background:var(--green)"></div> Shipping</div>
-        <div class="map-stat"><div class="map-stat-dot" style="background:var(--cyan)"></div> U.S. Navy</div>
+        <div class="map-stat"><div class="map-stat-dot" style="background:var(--cyan); border-radius:0;"></div> U.S. Navy</div>
+        <div class="map-stat"><div class="map-stat-dot" style="background:var(--cyan); border-radius:1px; width:6px; height:4px;"></div> Mine sweeper</div>
       </div>
     </div>
     <div id="charts-row">
@@ -898,7 +899,7 @@ const CONFIG = {
   initialTraffic: 5,
   initialConfidence: 8,
   initialThreatPressure: 75,
-  initialMineThreat: 65,
+  initialMineThreat: 35,
   initialBaseOperability: 80,
   initialEscortCredibility: 10,
   initialCoverAvailability: 15,
@@ -939,7 +940,7 @@ const CONFIG = {
 
   // Traffic model (asymmetric)
   trafficCollapseThreshold: 35,
-  trafficRecoveryRate: 0.12,
+  trafficRecoveryRate: 0.16,
   trafficCollapseRate: 0.35,
   trafficMinResidual: 3,
   trafficNoiseRange: 2,
@@ -977,7 +978,7 @@ const SCENARIOS = {
   optimistic: {
     label: "Optimistic for U.S.",
     overrides: {
-      initialThreatPressure: 60, initialMineThreat: 45, initialBaseOperability: 90,
+      initialThreatPressure: 60, initialMineThreat: 25, initialBaseOperability: 90,
       initialCoverAvailability: 25, initialPremiumBurden: 70, initialOperationalWillingness: 20,
       iranReconBaseRate: 2.5, strikeEffectiveness: 0.35, mcmEffectiveness: 0.20,
       escortBuildRate: 0.10, attackBaseChance: 0.020,
@@ -986,7 +987,7 @@ const SCENARIOS = {
   pessimistic: {
     label: "Pessimistic for U.S.",
     overrides: {
-      initialThreatPressure: 90, initialMineThreat: 80, initialBaseOperability: 65,
+      initialThreatPressure: 90, initialMineThreat: 50, initialBaseOperability: 65,
       initialCoverAvailability: 5, initialPremiumBurden: 95, initialOperationalWillingness: 5,
       iranReconBaseRate: 6.0, strikeEffectiveness: 0.20, mcmEffectiveness: 0.10,
       attackBaseChance: 0.040,
@@ -995,7 +996,7 @@ const SCENARIOS = {
   "mine-heavy": {
     label: "Mine-Heavy Disruption",
     overrides: {
-      initialMineThreat: 90, initialThreatPressure: 55,
+      initialMineThreat: 60, initialThreatPressure: 55,
       iranMineWeight: 0.45, iranDroneWeight: 0.15, iranMissileWeight: 0.15,
       iranReconWeight: 0.15, iranBaseAttackWeight: 0.10,
       mcmEffectiveness: 0.11, attackMineThreatBoost: 10,
@@ -1009,7 +1010,7 @@ const SCENARIOS = {
     overrides: {
       iranReconBaseRate: 8.0, iranReconWeight: 0.30, iranDroneWeight: 0.25,
       iranMissileWeight: 0.20, iranMineWeight: 0.15, iranBaseAttackWeight: 0.10,
-      initialThreatPressure: 70, initialMineThreat: 50,
+      initialThreatPressure: 70, initialMineThreat: 30,
     }
   }
 };
@@ -1032,6 +1033,8 @@ let minePositions = [];
 let shipEntities = [];
 let usPositions = [];
 let threatZones = [];
+let droneAnimations = []; // { sx, sy, tx, ty, progress, speed }
+let mcmVessels = [];      // { x, dir, lane }
 
 
 // ============================================================
@@ -1099,12 +1102,13 @@ function generateMinePositions(count) {
 
 function generateusPositions() {
   usPositions = [
-    { x: 0.12, y: 0.50, type: 'base', label: '5TH FLEET FWD' },
-    { x: 0.85, y: 0.70, type: 'base', label: 'LOGISTICS BASE' },
-    { x: 0.45, y: 0.58, type: 'escort', label: '' },
-    { x: 0.60, y: 0.42, type: 'escort', label: '' },
-    { x: 0.35, y: 0.35, type: 'patrol', label: '' },
-    { x: 0.72, y: 0.38, type: 'patrol', label: '' },
+    { x: 0.15, y: 0.60, type: 'base', label: 'FWD OPS' },           // Forward operating base, west of strait
+    { x: 0.50, y: 0.65, type: 'base', label: 'MCM STAGING' },       // Mine countermeasures staging, near shipping lanes
+    { x: 0.85, y: 0.82, type: 'base', label: 'LOGISTICS' },         // Rear logistics/air support, on Omani coast
+    { x: 0.40, y: 0.50, type: 'escort', label: '' },                 // Escort in western strait
+    { x: 0.62, y: 0.45, type: 'escort', label: '' },                 // Escort in eastern strait
+    { x: 0.30, y: 0.38, type: 'patrol', label: '' },                 // Patrol near Iranian coast
+    { x: 0.70, y: 0.35, type: 'patrol', label: '' },                 // Patrol eastern approaches
   ];
 }
 
@@ -1114,6 +1118,35 @@ function generateThreatZones() {
     { x: 0.55, y: 0.18, r: 0.06, label: '' },
     { x: 0.70, y: 0.28, r: 0.07, label: 'LAUNCH SITE' },
     { x: 0.48, y: 0.30, r: 0.05, label: '' },
+  ];
+}
+
+// Spawn drones from current launch triangle positions toward shipping lane
+function spawnDroneAnimations() {
+  if (state.threatPressure <= 10) return;
+  const count = Math.min(Math.floor(state.threatPressure / 15), 6);
+  for (let i = 0; i < count; i++) {
+    const seed = state.day * 7 + i * 13;
+    const lx = 0.25 + ((Math.sin(seed * 0.73) + 1) / 2) * 0.55;
+    const coastY = IRAN_COAST[Math.floor(((Math.sin(seed * 1.1) + 1) / 2) * (IRAN_COAST.length - 1))];
+    const ly = coastY[1] + 0.01 + ((Math.sin(seed * 2.3) + 1) / 2) * 0.04;
+    // Target: a point on the shipping lane
+    const targetX = lx + (Math.random() - 0.5) * 0.1;
+    const targetY = lerpLane(SHIPPING_LANE, clamp(targetX, 0, 1));
+    droneAnimations.push({
+      sx: lx, sy: ly, tx: targetX, ty: targetY,
+      progress: 0, speed: 0.008 + Math.random() * 0.006,
+      fade: 1.0
+    });
+  }
+}
+
+// Initialize MCM vessels along shipping lanes
+function initMcmVessels() {
+  mcmVessels = [
+    { x: 0.35, dir: 1, lane: SHIPPING_LANE },
+    { x: 0.50, dir: -1, lane: SHIPPING_LANE_2 },
+    { x: 0.65, dir: 1, lane: SHIPPING_LANE },
   ];
 }
 
@@ -1136,7 +1169,7 @@ function generateShips(count) {
     shipEntities.push({
       x: t,
       y: lerpLane(lane, t) + (Math.random() - 0.5) * 0.03,
-      speed: 0.003 + Math.random() * 0.004,
+      speed: 0.0008 + Math.random() * 0.0012,
       lane: lane,
       active: true,
     });
@@ -1230,26 +1263,6 @@ function drawMap() {
   drawPath(ctx, SHIPPING_LANE_2, mx, my);
   ctx.setLineDash([]);
 
-  // --- Threat zones (Iranian) ---
-  const threatAlpha = clamp(state.threatPressure / 100, 0.1, 0.8);
-  threatZones.forEach(tz => {
-    const r = tz.r * Math.min(w, h) * (0.5 + state.threatPressure / 200);
-    ctx.beginPath();
-    ctx.arc(mx(tz.x), my(tz.y), r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(204, 68, 68, ${threatAlpha * 0.15})`;
-    ctx.fill();
-    ctx.strokeStyle = `rgba(204, 68, 68, ${threatAlpha * 0.4})`;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    if (tz.label && w > 600) {
-      ctx.font = '8px IBM Plex Mono, monospace';
-      ctx.fillStyle = `rgba(204, 68, 68, ${threatAlpha * 0.6})`;
-      ctx.textAlign = 'center';
-      ctx.fillText(tz.label, mx(tz.x), my(tz.y) - r - 3);
-    }
-  });
-
   // --- Dispersed drone/missile launch points (along Iranian coast) ---
   // These appear and disappear to show that launches come from everywhere
   if (state.threatPressure > 10) {
@@ -1262,17 +1275,21 @@ function drawMap() {
       const coastY = IRAN_COAST[Math.floor(((Math.sin(seed * 1.1) + 1) / 2) * (IRAN_COAST.length - 1))];
       const ly = coastY[1] + 0.01 + ((Math.sin(seed * 2.3) + 1) / 2) * 0.04;
 
-      // Small upward-pointing triangle = launch indicator
+      // Upward-pointing triangle = launch indicator
       const pulse = (Math.sin(Date.now() * 0.003 + i * 1.5) + 1) / 2;
-      const alpha = 0.2 + pulse * 0.4;
-      ctx.fillStyle = `rgba(204, 68, 68, ${alpha})`;
+      const alpha = 0.3 + pulse * 0.5;
+      ctx.fillStyle = `rgba(224, 80, 80, ${alpha})`;
       const px = mx(lx), py = my(ly);
+      const ts = 6; // triangle size
       ctx.beginPath();
-      ctx.moveTo(px, py - 4);
-      ctx.lineTo(px - 2.5, py + 2);
-      ctx.lineTo(px + 2.5, py + 2);
+      ctx.moveTo(px, py - ts);
+      ctx.lineTo(px - ts * 0.7, py + ts * 0.4);
+      ctx.lineTo(px + ts * 0.7, py + ts * 0.4);
       ctx.closePath();
       ctx.fill();
+      ctx.strokeStyle = `rgba(224, 80, 80, ${alpha * 0.6})`;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
 
       // Occasional "launch trail" line toward the strait
       if (pulse > 0.7 && state.threatPressure > 40) {
@@ -1308,6 +1325,71 @@ function drawMap() {
     ctx.beginPath();
     ctx.ellipse(mx(0.52), my(0.47), mx(0.22), my(0.08), 0, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  // --- Drone animations (fly from launch sites toward shipping lane) ---
+  for (let i = droneAnimations.length - 1; i >= 0; i--) {
+    const d = droneAnimations[i];
+    d.progress += d.speed;
+    if (d.progress >= 1) {
+      d.fade -= 0.03;
+      if (d.fade <= 0) { droneAnimations.splice(i, 1); continue; }
+    }
+    const t = Math.min(d.progress, 1);
+    const dx = d.sx + (d.tx - d.sx) * t;
+    const dy = d.sy + (d.ty - d.sy) * t;
+    const alpha = d.progress >= 1 ? d.fade * 0.6 : 0.7;
+    // Small red triangle pointing toward target
+    const angle = Math.atan2(d.ty - d.sy, d.tx - d.sx);
+    const px = mx(dx), py = my(dy);
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(angle - Math.PI / 2);
+    ctx.fillStyle = `rgba(224, 80, 80, ${alpha})`;
+    ctx.beginPath();
+    ctx.moveTo(0, -4);
+    ctx.lineTo(-2.5, 3);
+    ctx.lineTo(2.5, 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    // Trail
+    if (d.progress < 1) {
+      const trailLen = 0.04;
+      const trailT = Math.max(0, t - trailLen);
+      const trailX = d.sx + (d.tx - d.sx) * trailT;
+      const trailY = d.sy + (d.ty - d.sy) * trailT;
+      ctx.strokeStyle = `rgba(224, 80, 80, ${alpha * 0.3})`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(mx(trailX), my(trailY));
+      ctx.lineTo(px, py);
+      ctx.stroke();
+    }
+  }
+
+  // --- MCM vessels (slow-moving along shipping lanes when MCM allocated) ---
+  const mcmAlloc = +document.getElementById('slider-mcm').value;
+  if (mcmAlloc > 20) {
+    const mcmAlpha = clamp(mcmAlloc / 100, 0.3, 0.8);
+    mcmVessels.forEach(mv => {
+      // Slow sweep movement
+      mv.x += mv.dir * 0.0008;
+      if (mv.x > 0.78) mv.dir = -1;
+      if (mv.x < 0.28) mv.dir = 1;
+      const myY = lerpLane(mv.lane, mv.x);
+      const px = mx(mv.x), py = my(myY);
+      // Draw as small rectangle with sweep arc
+      ctx.fillStyle = `rgba(80, 192, 224, ${mcmAlpha})`;
+      ctx.fillRect(px - 3, py - 2, 6, 4);
+      // Sweep arc ahead of vessel
+      ctx.strokeStyle = `rgba(80, 192, 224, ${mcmAlpha * 0.3})`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      const sweepDir = mv.dir > 0 ? 0 : Math.PI;
+      ctx.arc(px, py, 12, sweepDir - 0.6, sweepDir + 0.6);
+      ctx.stroke();
+    });
   }
 
   // --- Shipping (green dots moving along lanes) ---
@@ -1555,6 +1637,8 @@ function initState() {
   generateusPositions();
   generateThreatZones();
   generateShips(30);
+  initMcmVessels();
+  droneAnimations = [];
 }
 
 
@@ -1644,8 +1728,8 @@ function simulateDay(pa) {
 
   // Mine persistence
   const mineEffort = iran.mine * ib;
-  s.mineThreat += mineEffort * 0.06;
-  if (mineEffort > 15) events.push({text: "Iranian mine-laying detected in transit lanes", type: 'attack'});
+  s.mineThreat += mineEffort * 0.03;
+  if (mineEffort > 12) events.push({text: "Iranian mine-laying detected in transit lanes", type: 'attack'});
 
   // Base attacks — Iranian counterforce strikes on U.S. bases
   const baseAttackEffort = iran.baseAttack * ib;
@@ -1805,7 +1889,7 @@ function simulateDay(pa) {
     s.mineThreat > 10 ? 0.5 :
     s.mineThreat > 3 ? 0.8 : 1.0;
 
-  const threatConfFactor = clamp(1 - s.threatPressure / 80, 0, 1);
+  const threatConfFactor = clamp(1 - s.threatPressure / 100, 0, 1);
   const coverFactor = clamp(s.coverAvailability / 60, 0, 1); // need at least 60% cover
   const premiumFactor = clamp(1 - (s.premiumBurden - 30) / 60, 0, 1);
   const willingFactor = clamp(s.operationalWillingness / 50, 0, 1);
@@ -1821,7 +1905,7 @@ function simulateDay(pa) {
 
   // Asymmetric movement: slow to build, fast to collapse
   if (target > s.merchantConfidence) {
-    s.merchantConfidence += (target - s.merchantConfidence) * 0.06; // very slow recovery
+    s.merchantConfidence += (target - s.merchantConfidence) * 0.10; // slow recovery
   } else {
     s.merchantConfidence += (target - s.merchantConfidence) * 0.35; // fast collapse
   }
@@ -2133,6 +2217,7 @@ function advanceDay() {
   if (a.strike + a.mcm + a.escort + a.base + a.reserve > cfg.playerBudget) return;
 
   const result = simulateDay(a);
+  spawnDroneAnimations();
   updateMeters();
   updateShipperOutlook();
   updateDayDisplay();
